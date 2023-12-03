@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import cm.everafter.R // Replace with the actual resource file for your image placeholder
+import cm.everafter.navigation.Screens
 import cm.everafter.ui.theme.EverAfterTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,8 +51,8 @@ fun ProfileScreen(
                 }
             },
             actions = {
-                IconButton(onClick = { /* Handle settings click */ }) {
-                    Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                IconButton(onClick = { navController.navigate(Screens.HomeScreen.route) }) {
+                    Icon(imageVector = Icons.Default.Home, contentDescription = "Settings")
                 }
             }
         )
