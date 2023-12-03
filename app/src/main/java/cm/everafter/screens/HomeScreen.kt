@@ -6,13 +6,17 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,7 +40,7 @@ val auth = Firebase.auth
 
 @Composable
 fun HomeScreen(
-    navController : NavController,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
 
@@ -45,8 +49,23 @@ fun HomeScreen(
     } else {
         Column(
             modifier = modifier,
-        ){
+        ) {
+            // Add the Profile button at the top right
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = { navController.navigate(Screens.ProfileScreen.route) },
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    Icon(imageVector = Icons.Default.Person, contentDescription = "Profile")
+                }
+            }
 
+            // Rest of HomeScreen content
         }
     }
 }

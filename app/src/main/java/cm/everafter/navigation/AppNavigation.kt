@@ -23,6 +23,9 @@ fun AppNavigation(navController: NavHostController) {
         composable(route = Screens.CameraScreen.route){
             CameraScreen(navController = navController)
         }
+        composable(route = Screens.ProfileScreen.route){
+            ProfileScreen(navController = navController)
+        }
         composable(route = Screens.GamesScreen.route){
             GamesScreen(navController = navController)
         }

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -59,7 +60,6 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun EverAfter() {
     val listOfNavItems = listOf(
-
         NavItem(
             label = "Home",
             icon = Icons.Default.Home,

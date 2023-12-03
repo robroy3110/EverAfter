@@ -1,32 +1,141 @@
 package cm.everafter.screens
 
-import android.util.Log
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import cm.everafter.R // Replace with the actual resource file for your image placeholder
+import cm.everafter.ui.theme.EverAfterTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    navController : NavController,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(20.dp),
-    ){
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // App Bar
+        TopAppBar(
+            title = {
+                Text(text = "Profile", fontWeight = FontWeight.Bold)
+            },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            },
+            actions = {
+                IconButton(onClick = { /* Handle settings click */ }) {
+                    Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                }
+            }
+        )
 
-            Text(text= "Register")
+        // User Profile Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Profile Picture (Replace with actual user picture)
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your image resource
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentScale = ContentScale.Crop
+            )
+        }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // User Details Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+
+
+            // Action Buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically  // Center vertically
+            ) {
+
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                // Edit Profile Button
+                Button(
+                    onClick = { /* Handle edit profile click */ },
+                    modifier = Modifier
+                        .wrapContentSize()  // Make the button wrap its content
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Profile")
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Edit")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Placeholder for additional user details
+            // Add more details as needed (e.g., email, bio, etc.)
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Ryan Reynolds", // Replace with actual user name
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,  // Center the text
+                fontWeight = FontWeight.Bold
+            )
+
+        }
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun ProfileScreenPreview() {
+    // Mock NavController for preview
+    val navController: NavController = rememberNavController()
+    EverAfterTheme {
+        ProfileScreen(navController = navController)
     }
 }
