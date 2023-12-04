@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import cm.everafter.navigation.AppNavigation
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -87,47 +88,64 @@ fun EverAfter() {
         ),
     )
     val navController = rememberNavController()
-    
-    Scaffold(
-        modifier = Modifier,
-        bottomBar = { 
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                
-                listOfNavItems.forEach { navItem ->
-                    NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == navItem.route } == true,
-                        onClick = { 
-                            navController.navigate(navItem.route) {
-                               popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }                               
-                                launchSingleTop = true
-                                restoreState = true
-                            } 
-                        },
-                        icon = { 
-                            Icon(
-                                imageVector = navItem.icon,
-                                contentDescription = null
-                            )
-                        },
-                        label = {
-                            Text(text = navItem.label)
-                        }
-                    )
-                }
-            }
-        
-          }  
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    if (currentDestination?.route == "login_screen" || currentDestination?.route == "register_screen") {
+        Scaffold(
+            modifier = Modifier,
         ) {
-            AppNavigation(navController = navController)
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+            ) {
+
+                AppNavigation(navController = navController)
+            }
+        }
+
+    } else {
+        Scaffold(
+            modifier = Modifier,
+            bottomBar = {
+                NavigationBar {
+
+                    listOfNavItems.forEach { navItem ->
+                        NavigationBarItem(
+                            selected = currentDestination?.hierarchy?.any { it.route == navItem.route } == true,
+                            onClick = {
+                                navController.navigate(navItem.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = navItem.icon,
+                                    contentDescription = null
+                                )
+                            },
+                            label = {
+                                Text(text = navItem.label)
+                            }
+                        )
+                    }
+                }
+
+            }
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+            ) {
+
+                AppNavigation(navController = navController)
+            }
         }
     }
 }
