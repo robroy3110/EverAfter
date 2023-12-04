@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import cm.everafter.Perfil
 import cm.everafter.R
 import cm.everafter.navigation.Screens
 import com.firebase.ui.auth.AuthUI
@@ -49,7 +50,8 @@ import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import com.google.firebase.auth.auth
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
 
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -61,10 +63,29 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
-/*    if (auth.currentUser == null) {
+  if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
-    } else {*/
-    Column(
+    } else {
+        lateinit var user : Perfil
+        var load = false
+        db.reference.child("Users").child(auth.currentUser!!.uid).get().addOnCompleteListener {
+            if (it.isSuccessful) {
+                var dataSnapshot: DataSnapshot = it.result;
+                if (dataSnapshot.exists()) {
+                    Log.e("AUTENTICAÇAO", "${dataSnapshot.value}")
+                    user = dataSnapshot.getValue(Perfil::class.java)!!
+                    Log.e("AUTENTICALAI","$user")
+                    load = true
+                }
+            } else {
+                // Ocorreu um erro ao tentar obter os dados
+                var error = it.exception;
+                Log.e("Firebase", "Erro: " + error?.message);
+            }
+        }
+
+
+      Column(
         modifier = modifier
             .fillMaxSize()
             .padding(20.dp)
@@ -85,7 +106,10 @@ fun HomeScreen(
             )
 
             Button(
-                onClick = { navController.navigate(Screens.ProfileScreen.route) },
+                onClick = { auth.signOut()
+                    navController.navigate(Screens.LogInScreen.route)
+
+                    /*navController.navigate(Screens.ProfileScreen.route)*/ },
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(start = 8.dp)
@@ -99,6 +123,13 @@ fun HomeScreen(
                     modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                 )
             }
+            var teste = auth.currentUser?.uid
+
+            when (load){
+                true ->  Text("Logged In ${user.name} and ${user.username}")
+                false -> Text("Not loaded yet")
+            }
+
 
         }
 
@@ -274,6 +305,6 @@ fun HomeScreen(
         // ... Rest of your content
     }
 
-    //}
+    }
 }
 

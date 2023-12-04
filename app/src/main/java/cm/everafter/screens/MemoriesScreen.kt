@@ -18,7 +18,7 @@ fun MemoriesScreen(
     modifier = modifier.fillMaxSize().padding(20.dp),
 ){
 
-    Text(text= "Register")
+    Text(text= "Mmeomreies")
 
 }
 }

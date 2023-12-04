@@ -18,7 +18,7 @@ fun GamesScreen(
     modifier = modifier.fillMaxSize().padding(20.dp),
 ){
 
-    Text(text= "Register")
+    Text(text= "Game SCreen")
 
 }
 }
