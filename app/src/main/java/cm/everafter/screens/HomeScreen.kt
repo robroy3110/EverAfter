@@ -50,6 +50,7 @@ import androidx.navigation.NavController
 import cm.everafter.Perfil
 import cm.everafter.R
 import cm.everafter.navigation.Screens
+import cm.everafter.viewModels.UserViewModel
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
@@ -66,12 +67,33 @@ val auth = Firebase.auth
 @Composable
 fun HomeScreen(
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: UserViewModel // Inject the UserViewModel
 ) {
 
   if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
+      lateinit var user: Perfil
+      var load = false
+      db.reference.child("Users").child(auth.currentUser!!.uid)
+          .get()
+          .addOnCompleteListener { task ->
+              if (task.isSuccessful) {
+                  val dataSnapshot: DataSnapshot = task.result
+                  if (dataSnapshot.exists()) {
+                      user = dataSnapshot.getValue(Perfil::class.java)!!
+                      viewModel.loggedInUser = user // Save the logged-in user to the ViewModel
+                      Log.e("USERCURRENT", "${viewModel.loggedInUser}")
+
+                      load = true
+                  }
+              } else {
+                  // Ocorreu um erro ao tentar obter os dados
+                  val error = task.exception
+                  Log.e("Firebase", "Erro: " + error?.message)
+              }
+          }
         ResultScreen(modifier = modifier.fillMaxWidth(), navController)
     }
 }
@@ -111,10 +133,10 @@ fun ResultScreen( modifier: Modifier, navController: NavController) {
 
                 Button(
                     onClick = {
-                        auth.signOut()
-                        navController.navigate(Screens.LogInScreen.route)
+                        //auth.signOut()
+                        //navController.navigate(Screens.LogInScreen.route)
 
-                        /*navController.navigate(Screens.ProfileScreen.route)*/
+                        navController.navigate(Screens.ProfileScreen.route)
                     },
                     modifier = Modifier
                         .wrapContentSize()
@@ -130,10 +152,10 @@ fun ResultScreen( modifier: Modifier, navController: NavController) {
                     )
                 }
 
-
+/*
                 Text(text = it.name)
                 Text(text = it.username, color = Color.Black)
-
+*/
 
             }
 
