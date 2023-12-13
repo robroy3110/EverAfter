@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -40,7 +43,27 @@ fun MemoriesScreen(
                     Text(text = "Memories")
                 },
                 actions = {
-                    // Adicione ações do menu, se necessário
+                    Button(
+                        onClick = {
+                            selectedView = MemoriesView.CalendarView
+                        }
+                    ) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Calendar")
+                    }
+                    Button(
+                        onClick = {
+                            selectedView = MemoriesView.PhotoGridView
+                        }
+                    ) {
+                        Icon(Icons.Outlined.Star, contentDescription = "Photo Grid")
+                    }
+                    Button(
+                        onClick = {
+                            selectedView = MemoriesView.MapView
+                        }
+                    ) {
+                        Icon(Icons.Default.LocationOn, contentDescription = "Map View")
+                    }
                 }
             )
         }
