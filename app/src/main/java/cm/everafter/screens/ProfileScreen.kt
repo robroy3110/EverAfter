@@ -28,12 +28,14 @@ import androidx.navigation.compose.rememberNavController
 import cm.everafter.R // Replace with the actual resource file for your image placeholder
 import cm.everafter.navigation.Screens
 import cm.everafter.ui.theme.EverAfterTheme
+import cm.everafter.viewModels.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: UserViewModel // Inject the UserViewModel
 ) {
     Column(
         modifier = modifier
@@ -121,16 +123,19 @@ fun ProfileScreen(
             // Add more details as needed (e.g., email, bio, etc.)
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Ryan Reynolds", // Replace with actual user name
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,  // Center the text
-                fontWeight = FontWeight.Bold
-            )
+            viewModel.loggedInUser?.let {
+                Text(
+                    text = viewModel.loggedInUser!!.username, // Replace with actual user name
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,  // Center the text
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
         }
     }
 }
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
@@ -140,4 +145,4 @@ fun ProfileScreenPreview() {
     EverAfterTheme {
         ProfileScreen(navController = navController)
     }
-}
+}*/

@@ -1,21 +1,23 @@
 package cm.everafter.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import cm.everafter.screens.*
+import cm.everafter.viewModels.UserViewModel
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-
+    val userViewModel: UserViewModel = viewModel()
     NavHost(
         navController = navController,
         startDestination = Screens.HomeScreen.route)
     {
         composable(route = Screens.HomeScreen.route){
-            HomeScreen(navController = navController)
+            HomeScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.MemoriesScreen.route){
             MemoriesScreen(navController = navController)
@@ -24,7 +26,7 @@ fun AppNavigation(navController: NavHostController) {
             CameraScreen(navController = navController)
         }
         composable(route = Screens.ProfileScreen.route){
-            ProfileScreen(navController = navController)
+            ProfileScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.GamesScreen.route){
             GamesScreen(navController = navController)
