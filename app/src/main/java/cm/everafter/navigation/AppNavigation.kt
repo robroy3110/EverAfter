@@ -1,10 +1,10 @@
 package cm.everafter.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import cm.everafter.Perfil
 import cm.everafter.screens.*
 
 @Composable
@@ -21,7 +21,10 @@ fun AppNavigation(navController: NavHostController) {
             MemoriesScreen(navController = navController)
         }
         composable(route = Screens.CameraScreen.route){
-            CameraScreen(navController = navController)
+            MemoriesScreen(navController = navController)
+        }
+        composable(route = Screens.SearchUserScreen.route){
+            SearchUserScreen(navController = navController)
         }
         composable(route = Screens.ProfileScreen.route){
             ProfileScreen(navController = navController)

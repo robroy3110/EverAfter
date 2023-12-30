@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "cm.everafter"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -39,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
@@ -78,5 +79,12 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
+    val camerax_version = "1.3.0"
+    implementation ("androidx.camera:camera-core:${camerax_version}")
+    implementation ("androidx.camera:camera-camera2:${camerax_version}")
+    implementation ("androidx.camera:camera-lifecycle:${camerax_version}")
+    implementation ("androidx.camera:camera-video:${camerax_version}")
+    implementation ("androidx.camera:camera-view:${camerax_version}")
+    implementation ("androidx.camera:camera-extensions:${camerax_version}")
 
 }

@@ -102,13 +102,13 @@ fun LogIn(
                 }
             }
         ) {
-            Text(text = "Log In")
+            Text(text = "Login")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         ClickableText(
-            text = AnnotatedString("Register Here."),
+            text = AnnotatedString("Register here."),
             onClick = {
                 navController.navigate(Screens.RegisterScreen.route)
             }

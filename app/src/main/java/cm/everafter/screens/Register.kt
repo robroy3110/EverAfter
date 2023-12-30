@@ -118,7 +118,10 @@ fun Register(
                     if (task.isSuccessful) {
                         Log.d("Auth", "Success!")
                         db.reference.child("Users").child(auth.currentUser!!.uid).setValue(
-                            Perfil(name.value.text, "", 0, "", "",username.value.text)
+                            Perfil(name.value.text, "", "", username.value.text.trim())
+                        )
+                        db.reference.child("Usernames").child(username.value.text.trim()).setValue(
+                            auth.currentUser!!.uid
                         )
                         navController.navigate(Screens.HomeScreen.route)
                     } else {
@@ -140,3 +143,4 @@ fun Register(
         )
     }
 }
+

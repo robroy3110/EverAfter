@@ -2,4 +2,6 @@
 <resources>
 
     <style name="Theme.EverAfter" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.FotoScreen" parent="Theme.AppCompat.Light.DarkActionBar"/>
+
 </resources>

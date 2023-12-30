@@ -1,5 +1,6 @@
 package cm.everafter
 
+import android.content.Intent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -42,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,10 +58,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import cm.everafter.screens.FotoScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EverAfter() {
+    val context = LocalContext.current
+
     val listOfNavItems = listOf(
         NavItem(
             label = "Home",
@@ -105,6 +110,9 @@ fun EverAfter() {
             }
         }
 
+    } else if(currentDestination?.route == "camera_screen"){
+        val intent = Intent(context, FotoScreen::class.java)
+        context.startActivity(intent)
     } else {
         Scaffold(
             modifier = Modifier,

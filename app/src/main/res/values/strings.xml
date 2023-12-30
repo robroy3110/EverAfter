@@ -2,5 +2,6 @@
     <string name="app_name">EverAfter</string>
     <string name="loading">Loading</string>
     <string name="loading_failed">Failed to load</string>
+    <string name="take_photo">Take Photo</string>
 
 </resources>

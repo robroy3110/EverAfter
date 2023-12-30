@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import cm.everafter.Perfil
 import cm.everafter.R // Replace with the actual resource file for your image placeholder
 import cm.everafter.navigation.Screens
 import cm.everafter.ui.theme.EverAfterTheme
@@ -46,12 +47,15 @@ fun ProfileScreen(
                 Text(text = "Profile", fontWeight = FontWeight.Bold)
             },
             navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = {
+                    navController.popBackStack() }) {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                 }
             },
             actions = {
-                IconButton(onClick = { navController.navigate(Screens.HomeScreen.route) }) {
+                IconButton(onClick = {
+                    auth.signOut()
+                    navController.navigate(Screens.HomeScreen.route) }) {
                     Icon(imageVector = Icons.Default.Home, contentDescription = "Settings")
                 }
             }
@@ -131,13 +135,4 @@ fun ProfileScreen(
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
-@Composable
-fun ProfileScreenPreview() {
-    // Mock NavController for preview
-    val navController: NavController = rememberNavController()
-    EverAfterTheme {
-        ProfileScreen(navController = navController)
-    }
-}
+
