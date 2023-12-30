@@ -1,6 +1,6 @@
 package cm.everafter.screens
 
-import android.annotation.SuppressLint
+import android.os.Bundle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
@@ -16,11 +15,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
 
 sealed class MemoriesView {
@@ -28,6 +33,7 @@ sealed class MemoriesView {
     object PhotoGridView : MemoriesView()
     object MapView : MemoriesView()
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoriesScreen(
@@ -108,12 +114,45 @@ fun PhotoGridView(paddingValues: PaddingValues) {
 
 @Composable
 fun MapView(paddingValues: PaddingValues) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-    ) {
-        Text(text = "Map View")
-        // Conteúdo específico do mapa aqui
-    }
+    var mapView: MapView? = null
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { context ->
+            mapView = MapView(context)
+            mapView!!
+        },
+        update = { mapView ->
+            // Configurações adicionais podem ser feitas aqui
+            mapView?.onCreate(Bundle())
+            mapView?.getMapAsync { googleMap ->
+                // Configurações adicionais do mapa
+                onMapReady(googleMap)
+            }
+        }
+    )
 }
+
+fun onMapReady(googleMap: GoogleMap) {
+    // Configurações adicionais do mapa após a inicialização
+
+    // Posição de Lisboa, Portugal
+    val coordenadasLisboa = LatLng(38.7223, -9.1393)
+
+    // Adicione um marcador em Lisboa
+    googleMap.addMarker(
+        MarkerOptions()
+            .position(coordenadasLisboa)
+            .title("Lisboa, Portugal")
+    )
+
+    // Configuração da posição e zoom
+    val cameraPosition = CameraPosition.Builder()
+        .target(coordenadasLisboa) // Define o centro do mapa na posição de Lisboa
+        .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
+        .build()
+
+    // Mova a câmera para a posição e zoom desejados
+    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+}
+
