@@ -66,6 +66,7 @@ import cm.everafter.Perfil
 import cm.everafter.R
 import cm.everafter.RelationShip
 import cm.everafter.navigation.Screens
+import cm.everafter.viewModels.UserViewModel
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
@@ -86,13 +87,15 @@ val auth = Firebase.auth
 @Composable
 fun HomeScreen(
     navController: NavController,
+    viewModel: UserViewModel,
     modifier: Modifier = Modifier
 ) {
 
   if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
-        ResultScreen(modifier = modifier.fillMaxWidth(), navController)
+
+        ResultScreen(modifier = modifier.fillMaxWidth(), navController,viewModel)
     }
 }
 
@@ -100,7 +103,7 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResultScreen( modifier: Modifier, navController: NavController) {
+fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: UserViewModel) {
     var user by remember { mutableStateOf<Perfil?>(null) }
     var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
     var showDialog by remember { mutableStateOf(false) }
@@ -108,6 +111,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController) {
     var showDialogError by remember { mutableStateOf(false) }
     var showDialogUserInRelationship by remember { mutableStateOf(false) }
     val username = remember { mutableStateOf(TextFieldValue()) }
+
     LaunchedEffect(Unit) {
         val data = getUserDataFromFirebase()
         user = data
@@ -129,7 +133,6 @@ fun ResultScreen( modifier: Modifier, navController: NavController) {
         }
 
         userRef.addValueEventListener(listener)
-
         // Remove the listener when the composable is disposed
         onDispose {
             userRef.removeEventListener(listener)
@@ -137,7 +140,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController) {
     }
 
     user?.let { thisUser ->
-
+        viewModel.loggedInUser = thisUser
         Column(
             modifier = modifier
                 .fillMaxSize()

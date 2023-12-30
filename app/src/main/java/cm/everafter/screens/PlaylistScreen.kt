@@ -172,4 +172,3 @@ val playlists = listOf(
     Playlist(name = "Playlist 3", imageResId = R.drawable.ic_launcher_foreground),
     // ... Add more playlists as needed
 )
-
