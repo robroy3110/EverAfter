@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,16 +45,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.R
-import cm.everafter.ui.theme.EverAfterTheme
+import cm.everafter.Playlist
+import com.google.firebase.Firebase
+import com.google.firebase.database.database
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,6 +172,7 @@ fun PlayListScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Playlist Rows
+        /*
         LazyColumn {
             items(playlists.chunked(3)) { rowPlaylists ->
                 Row(
@@ -187,6 +187,8 @@ fun PlayListScreen(
                 }
             }
         }
+
+         */
     }
 }
 
@@ -217,43 +219,8 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .padding(16.dp) // Adjusted padding as needed
             ) {
-                // UI for selecting personal/shared
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Type:")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        modifier = Modifier.padding(8.dp)
-                    ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                personalPlaylist = true
-                                expanded = false
-                            },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                            text = {
-                                Text("Personal")
-                            }
-                        )
 
-                        DropdownMenuItem(
-                            onClick = {
-                                personalPlaylist = false
-                                expanded = false
-                            },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                            text = {
-                                Text("Shared")
-                            }
-                        )
-                    }
-                }
+
 
                 // UI for playlistName, description, date, and location
                 OutlinedTextField(
@@ -295,9 +262,17 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = {
-                    // TODO: Handle save button click
-                    // You can use the entered values (personalPlaylist, playlistName, description, date, location)
-                    // for saving the new playlist
+                    // Save the playlist to Firebase
+                    val playlist = Playlist(
+                        name = playlistName,
+                        description = description,
+                        date = date,
+                        location = location
+                    )
+                    println("SAVED PLAYLIST SUPOSTAMENTE")
+                    savePlaylistToFirebase(playlist)
+
+                    // Hide the keyboard and dismiss the dialog
                     keyboardController?.hide()
                     onDismiss.invoke()
                 }
@@ -322,45 +297,18 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
     )
 }
 
+private fun savePlaylistToFirebase(playlist: Playlist) {
+    val database =Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+    val playlistsRef = database.getReference("Playlists")
+    println("PLAYLISts TREF" + playlistsRef)
+    // Generate a unique key for the playlist
+    val playlistKey = playlistsRef.push().key ?: return
 
-
-
-@Composable
-fun PlaylistItem(playlist: Playlist) {
-    Column(
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable { /* Handle click on playlist */ }
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = playlist.imageResId),
-            contentDescription = null,
-            modifier = Modifier
-                .size(64.dp)
-                .clip(MaterialTheme.shapes.medium)
-
-                .padding(8.dp),
-            contentScale = ContentScale.Crop
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = playlist.name,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
-        )
-    }
+    // Save the playlist to the Firebase Realtime Database
+    playlistsRef.child(playlistKey).setValue(playlist)
 }
 
-// will be removed
-data class Playlist(val name: String, val imageResId: Int)
 
-// Placeholder playlists
-val playlists = listOf(
-    Playlist(name = "Playlist 1", imageResId = R.drawable.ic_launcher_foreground),
-    Playlist(name = "Playlist 2", imageResId = R.drawable.ic_launcher_foreground),
-    Playlist(name = "Playlist 3", imageResId = R.drawable.ic_launcher_foreground),
-    // ... Add more playlists as needed
-)
+
+
+
