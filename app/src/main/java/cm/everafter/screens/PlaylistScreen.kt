@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -35,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +55,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.Playlist
+import cm.everafter.Song
 import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +68,15 @@ fun PlayListScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    // Initialize Firebase Database
+    val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+    val playlistsRef = database.getReference("Playlists")
+
+    // State to hold playlists from the database
+    var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+    // State to hold the playlist being edited
+    var editingPlaylist by remember { mutableStateOf<Playlist?>(null) }
+
     var showDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -171,33 +186,95 @@ fun PlayListScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Playlist Rows
-        /*
+        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
+        // Playlist from the database
+        // Retrieve playlists from the database
+        DisposableEffect(Unit) {
+            val playlistsListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val newPlaylists = snapshot.children.mapNotNull { it.getValue(Playlist::class.java) }
+                    playlists = newPlaylists
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle onCancelled
+                }
+            }
+
+            playlistsRef.addValueEventListener(playlistsListener)
+
+            onDispose {
+                playlistsRef.removeEventListener(playlistsListener)
+            }
+        }
+
+        // Display playlists in groups of three per row
         LazyColumn {
-            items(playlists.chunked(3)) { rowPlaylists ->
+            itemsIndexed(playlists.chunked(3)) { index, rowPlaylists ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     rowPlaylists.forEach { playlist ->
-                        PlaylistItem(playlist = playlist)
+
+                            // Display regular playlist item
+                            PlaylistItem(playlist = playlist) /*{
+                                // Set the editingPlaylist to the clicked playlist to enter editing state
+                                editingPlaylist = playlist
+                            }*/
+
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
             }
         }
 
-         */
     }
 }
+
+
+
+@Composable
+fun PlaylistItem(playlist: Playlist) {
+    Column(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primary)
+            .clickable { /* Handle click on playlist */ }
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Display playlist image if available
+        if (playlist.imageUri != null) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder image, replace with actual logic
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .padding(8.dp),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // Display playlist name
+        Text(
+            text = playlist.name,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun showAddPlaylistDialog(onDismiss: () -> Unit) {
     // TODO: Implement logic to handle user input and database interactions
     var expanded by remember { mutableStateOf(false) }
-    var personalPlaylist by remember { mutableStateOf(true) }
     var playlistName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("2023-12-01") }
@@ -307,6 +384,7 @@ private fun savePlaylistToFirebase(playlist: Playlist) {
     // Save the playlist to the Firebase Realtime Database
     playlistsRef.child(playlistKey).setValue(playlist)
 }
+
 
 
 
