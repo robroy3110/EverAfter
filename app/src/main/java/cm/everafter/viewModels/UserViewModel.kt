@@ -8,6 +8,6 @@ class UserViewModel : ViewModel() {
     var loggedInUser: Perfil? = null
         set(value) {
             field = value
-            Log.e("UserViewModel", "User details set: $value")
+            Log.i("UserViewModel", "User details set: $value")
         }
 }

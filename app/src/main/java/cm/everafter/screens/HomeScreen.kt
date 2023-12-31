@@ -1,6 +1,8 @@
 package cm.everafter.screens
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -49,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -77,12 +80,16 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
 val auth = Firebase.auth
+val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
+val storageRef = storage.reference
+
 
 @Composable
 fun HomeScreen(
@@ -104,13 +111,15 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: UserViewModel) {
+
     var user by remember { mutableStateOf<Perfil?>(null) }
-    var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
-    var showDialog by remember { mutableStateOf(false) }
-    var showDialogUser by remember { mutableStateOf(false) }
-    var showDialogError by remember { mutableStateOf(false) }
-    var showDialogUserInRelationship by remember { mutableStateOf(false) }
-    val username = remember { mutableStateOf(TextFieldValue()) }
+    var userImageBitMap by remember { mutableStateOf<Bitmap?>(null) }
+
+    var otherUser by remember { mutableStateOf<Perfil?>(null) }
+    var otherUserImageBitMap by remember { mutableStateOf<Bitmap?>(null)}
+
+    var relationShip by remember {mutableStateOf<RelationShip?>(null)}
+
 
     LaunchedEffect(Unit) {
         val data = getUserDataFromFirebase()
@@ -139,420 +148,98 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         }
     }
 
+
     user?.let { thisUser ->
+
         viewModel.loggedInUser = thisUser
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(20.dp)
 
-        ) {
-            // Top Section: 'This Is Us' and Profile Button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "This Is Us",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                )
-
-                Button(
-                    onClick = {
-                        navController.navigate(Screens.ProfileScreen.route)
-                    },
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(start = 8.dp)
-                        .background(Color.Transparent)
-
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        tint = Color.Black, // Black icon color
-                        modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
-                    )
-                }
-                Text(text = thisUser.name)
-                Text(text = thisUser.username, color = Color.Black)
-            }
-
-            // Divider line
-            Divider(
-                color = Color(0xFF8C52FF), // Changed to the desired color
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Couple pics Section
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Profile Picture (Replace with actual user picture)
-                Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your image resource
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
-
-                // Heart icon
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = "heart",
-                    tint = Color.Red, // Heart icon color
-                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
-                )
-
-                Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
-
-                // Profile Picture (Replace with actual user picture)
-                if(thisUser.relationship == ""){
-
-                    Image(
-                        painter = painterResource(id = R.drawable.add), // Replace with your image resource
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .clickable { showDialog = showDialog.not() },
-                        contentScale = ContentScale.Crop,
-                    )
-                }else{
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your image resource
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentScale = ContentScale.Crop
-                    )
+        if(thisUser.image != ""){
+            val ref = storageRef.child("ProfilePics/${thisUser.image}")
+            val megabytes: Long = 1024 * 1024
+            LaunchedEffect(Unit) {
+                try {
+                    val byteArray = ref.getBytes(megabytes).await()
+                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                } catch (e: Exception) {
+                    // Handle failure
+                    e.printStackTrace()
                 }
             }
-            Text(
-                text = "Date they met",
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(top = 8.dp) // Adjusted padding as needed
-            )
-            if (showDialog) {
-                Dialog(
-                    onDismissRequest = { showDialog = false },
-                    content = {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(375.dp)
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ){
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-
-                                Text(
-                                    text = "This is a dialog with buttons and an image.",
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                OutlinedTextField(
-                                    label = { Text("Username") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                    value = username.value,
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onValueChange = { username.value = it }
-                                )
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
-                                        var teste = db.reference.child("Usernames")
-                                            .child(username.value.text.trim()).get().addOnCompleteListener {
-                                                if (it.result.exists()){
-                                                    showDialog = showDialog.not()
-                                                    showDialogUser = showDialogUser.not()
-                                                    Log.i("Teste Not null", "${it.result}")
-                                                }else{
-                                                    showDialog = showDialog.not()
-                                                    showDialogError = showDialogError.not()
-                                                    Log.i("Teste NUll", "NULL I THINK: ${it.result}")
-                                                }
-                                            }
-                                    }
-                                ) {
-                                    Text(text = "Search")
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-            if (showDialogUser) {
-                LaunchedEffect(Unit) {
-                    val data = searchUserDataFromFirebase(username.value.text.trim())
-                    searchUser = data
-                }
-                searchUser?.let {
-                    Dialog(
-                        onDismissRequest = { showDialogUser = false },
-                        content = {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(375.dp)
-                                    .padding(16.dp),
-                                shape = RoundedCornerShape(16.dp),
-                            ){
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-
-                                    Text(
-                                        text = it.first.name,
-                                        modifier = Modifier.padding(16.dp),
-                                    )
-                                    Text(
-                                        text = it.first.username,
-                                        modifier = Modifier.padding(16.dp),
-                                    )
-                                    Button(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onClick = {
-
-                                            if(it.first.relationship == "" && thisUser.relationship == ""){
-
-                                                val relationShip = db.reference.child("Relationships").push()
-
-                                                val relationShipKey = relationShip.key
-
-                                                relationShip.setValue(
-                                                    RelationShip(0,"Today idk", Pair(auth.currentUser!!.uid,it.second.trim()))
-                                                )
-
-                                                db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(relationShipKey)
-                                                db.reference.child("Users").child(it.second.trim()).child("relationship").setValue(relationShipKey)
-
-                                            }else{
-                                                showDialogUserInRelationship = showDialogUserInRelationship.not()
-                                                showDialogUser = showDialogUser.not()
-                                            }
-
-                                        }
-                                    ) {
-                                        Text(text = "Add")
-                                    }
-                                }
-                            }
-                        }
-                    )
+        }else{
+            val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
+            val megabytes: Long = 1024 * 1024
+            LaunchedEffect(Unit) {
+                try {
+                    val byteArray = ref.getBytes(megabytes).await()
+                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                } catch (e: Exception) {
+                    // Handle failure
+                    e.printStackTrace()
                 }
             }
-            if(showDialogError){
-                Dialog(
-                    onDismissRequest = { showDialogError = false },
-                    content = {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(375.dp)
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ){
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-
-                                Text(
-                                    text = "Error user not found",
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Text(
-                                    text = "Try again?",
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
-                                        showDialogError = showDialogError.not()
-                                        showDialog = showDialog.not()
-                                    }
-                                ) {
-                                    Text(text = "Try Again")
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-            if(showDialogUserInRelationship){
-                Dialog(
-                    onDismissRequest = { showDialogUserInRelationship = false
-                                       showDialogUser = true},
-                    content = {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(375.dp)
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ){
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-
-                                Text(
-                                    text = "Error already in a relationship",
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Text(
-                                    text = "Try again?",
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
-                                        showDialogUserInRelationship = showDialogUserInRelationship.not()
-                                        showDialog = showDialog.not()
-                                    }
-                                ) {
-                                    Text(text = "Try Again")
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .background(
-                        color = Color(0xFFD9D9D9), // Color D9D9D9
-                        shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
-                    )
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "How long they are together",
-                    modifier = Modifier.wrapContentSize()
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-
-
-            Text(
-                text = "Daily Quests",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-            // Daily Quests
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .background(
-                        color = Color(0xFFD9D9D9), // Color D9D9D9
-                        shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
-                    )
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // Nested Column for the top row
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Quest Name
-                        Text(
-                            text = "Daily Quest 1",
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        // Points and Heart Icon
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "100",
-                                modifier = Modifier.padding(end = 4.dp) // Adjusted padding as needed
-                            )
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = "heart",
-                                tint = Color.Red, // Heart icon color
-                                modifier = Modifier.size(16.dp) // Adjusted size for the heart icon
-                            )
-                        }
-                    }
-// Bottom Row
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween, // Align items to the start and end
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Progress Bar (Replace with actual progress bar)
-                            // ...
-
-                            Spacer(modifier = Modifier.width(8.dp)) // Adjusted spacing between progress bar and points achieved
-
-                            // Points Achieved
-                            Text(
-                                text = "50/100",
-                                modifier = Modifier.wrapContentSize() // No need for weight when using SpaceBetween
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp)) // Adjusted spacing between rows
-                }
-
-            }
-            // ... Rest of your content
         }
+
+
+       if(thisUser.relationship != "") {
+            LaunchedEffect(Unit) {
+                try {
+                    val relationshipRef =
+                        db.reference.child("Relationships").child(thisUser.relationship).get()
+                            .await()
+                    if (relationshipRef.exists()) {
+                        relationShip = relationshipRef.getValue(RelationShip::class.java)
+                        var other = ""
+                        other = if (relationShip?.user1!! != auth.currentUser!!.uid) {
+                            relationShip?.user1!!
+                        } else {
+                            relationShip?.user2!!
+                        }
+                        val otherUserRef = db.reference.child("Users").child(other).get().await()
+                        if (otherUserRef.exists()) {
+                            otherUser = otherUserRef.getValue(Perfil::class.java)
+                            otherUserImageBitMap = if(otherUser?.image != ""){
+                                val ref = storageRef.child("ProfilePics/${otherUser?.image}")
+                                val megabytes: Long = 1024 * 1024
+                                val byteArray = ref.getBytes(megabytes).await()
+                                BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                            }else{
+                                val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
+                                val megabytes: Long = 1024 * 1024
+                                val byteArray = ref.getBytes(megabytes).await()
+                                BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Handle failure
+                    e.printStackTrace()
+                }
+            }
+           otherUserImageBitMap?.let{
+                HomeScreenRelation(
+                    modifier =  modifier,
+                    navController = navController,
+                    thisUser = thisUser,
+                    userBitMap = userImageBitMap!!,
+                    userBitMap2 = otherUserImageBitMap!!
+                )
+           }
+
+        }else{
+
+            userImageBitMap?.let {
+                HomeScreenNoRelation(modifier = modifier, navController =navController , thisUser = thisUser, userBitMap =userImageBitMap!! )
+            }
+
+
+
+       }
+        // Adjusted spacing between rows
     }
+
 }
+                    // ... Rest of your content
+
 
 @Composable
 fun LoadingScreen(modifier: Modifier) {
@@ -562,17 +249,609 @@ fun LoadingScreen(modifier: Modifier) {
         contentDescription = stringResource(R.string.loading)
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ErrorScreen(modifier: Modifier) {
+fun HomeScreenRelation(modifier: Modifier,navController: NavController,thisUser: Perfil, userBitMap: Bitmap, userBitMap2: Bitmap) {
+
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_connection_error), contentDescription = ""
+        // Top Section: 'This Is Us' and Profile Button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "This Is Us",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+            )
+
+            Button(
+                onClick = {
+                    navController.navigate(Screens.ProfileScreen.route)
+                },
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(start = 8.dp)
+                    .background(Color.Transparent)
+
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    tint = Color.Black, // Black icon color
+                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+                )
+            }
+            Text(text = thisUser.name)
+            Text(text = thisUser.username, color = Color.Black)
+        }
+
+        // Divider line
+        Divider(
+            color = Color(0xFF8C52FF), // Changed to the desired color
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
         )
-        Text(text = stringResource(R.string.loading_failed), modifier = Modifier.padding(16.dp))
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Couple pics Section
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Profile Picture (Replace with actual user picture)
+            Image(
+                bitmap = userBitMap.asImageBitmap(), // Replace with your image resource
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+            // Heart icon
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = "heart",
+                tint = Color.Red, // Heart icon color
+                modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+            )
+
+            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+            // Profile Picture (Replace with actual user picture)
+            Image(
+                bitmap = userBitMap2.asImageBitmap(),  // Replace with your image resource
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        Text(
+            text = "Date they met",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 8.dp) // Adjusted padding as needed
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .background(
+                    color = Color(0xFFD9D9D9), // Color D9D9D9
+                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "How long they are together",
+                modifier = Modifier.wrapContentSize()
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = "Daily Quests",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        // Daily Quests
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .background(
+                    color = Color(0xFFD9D9D9), // Color D9D9D9
+                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Nested Column for the top row
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Quest Name
+                    Text(
+                        text = "Daily Quest 1",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Points and Heart Icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "100",
+                            modifier = Modifier.padding(end = 4.dp) // Adjusted padding as needed
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "heart",
+                            tint = Color.Red, // Heart icon color
+                            modifier = Modifier.size(16.dp) // Adjusted size for the heart icon
+                        )
+                    }
+                }
+// Bottom Row
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween, // Align items to the start and end
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Progress Bar (Replace with actual progress bar)
+                        // ...
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Adjusted spacing between progress bar and points achieved
+
+                        // Points Achieved
+                        Text(
+                            text = "50/100",
+                            modifier = Modifier.wrapContentSize() // No need for weight when using SpaceBetween
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp)) // Adjusted spacing between rows
+            }
+
+        }
+        // ... Rest of your content
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreenNoRelation(modifier: Modifier,navController: NavController,thisUser: Perfil, userBitMap: Bitmap) {
+    var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+    var showDialogUser by remember { mutableStateOf(false) }
+    var showDialogError by remember { mutableStateOf(false) }
+    var showDialogUserInRelationship by remember { mutableStateOf(false) }
+    val username = remember { mutableStateOf(TextFieldValue()) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+
+    ) {
+        // Top Section: 'This Is Us' and Profile Button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "This Is Us",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+            )
+
+            Button(
+                onClick = {
+                    navController.navigate(Screens.ProfileScreen.route)
+                },
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(start = 8.dp)
+                    .background(Color.Transparent)
+
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    tint = Color.Black, // Black icon color
+                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+                )
+            }
+            Text(text = thisUser.name)
+            Text(text = thisUser.username, color = Color.Black)
+        }
+
+        // Divider line
+        Divider(
+            color = Color(0xFF8C52FF), // Changed to the desired color
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Couple pics Section
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Profile Picture (Replace with actual user picture)
+            Image(
+                bitmap = userBitMap.asImageBitmap(), // Replace with your image resource
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+            // Heart icon
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = "heart",
+                tint = Color.Red, // Heart icon color
+                modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+            )
+
+            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+            // Profile Picture (Replace with actual user picture)
+            Image(
+                painter = painterResource(id = R.drawable.add), // Replace with your image resource
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { showDialog = showDialog.not() },
+                contentScale = ContentScale.Crop,
+                )
+        }
+        Text(
+            text = "Date they met",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = 8.dp) // Adjusted padding as needed
+        )
+        if (showDialog) {
+            Dialog(
+                onDismissRequest = { showDialog = false },
+                content = {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(375.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+
+                            Text(
+                                text = "This is a dialog with buttons and an image.",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            OutlinedTextField(
+                                label = { Text("Username") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                                value = username.value,
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                onValueChange = { username.value = it }
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    db.reference.child("Usernames")
+                                        .child(username.value.text.trim()).get().addOnCompleteListener {
+                                            if (it.result.exists()){
+                                                showDialog = showDialog.not()
+                                                showDialogUser = showDialogUser.not()
+                                            }else{
+                                                showDialog = showDialog.not()
+                                                showDialogError = showDialogError.not()
+                                            }
+                                        }
+                                }
+                            ) {
+                                Text(text = "Search")
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        if (showDialogUser) {
+            LaunchedEffect(Unit) {
+                val data = searchUserDataFromFirebase(username.value.text.trim())
+                searchUser = data
+            }
+            searchUser?.let {
+                Dialog(
+                    onDismissRequest = { showDialogUser = false },
+                    content = {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(375.dp)
+                                .padding(16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                        ){
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+
+                                Text(
+                                    text = it.first.name,
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                                Text(
+                                    text = it.first.username,
+                                    modifier = Modifier.padding(16.dp),
+                                )
+                                Button(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+
+                                        if(it.first.relationship == "" && thisUser.relationship == ""){
+
+                                            val newRelationShip = db.reference.child("Relationships").push()
+
+                                            val relationShipKey = newRelationShip.key
+
+                                            newRelationShip.setValue(
+                                                RelationShip(0,"Today idk", auth.currentUser!!.uid,it.second.trim())
+                                            )
+
+                                            db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(relationShipKey)
+                                            db.reference.child("Users").child(it.second.trim()).child("relationship").setValue(relationShipKey)
+
+                                        }else{
+                                            showDialogUserInRelationship = showDialogUserInRelationship.not()
+                                            showDialogUser = showDialogUser.not()
+                                        }
+
+                                    }
+                                ) {
+                                    Text(text = "Add")
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        }
+        if(showDialogError){
+            Dialog(
+                onDismissRequest = { showDialogError = false },
+                content = {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(375.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+
+                            Text(
+                                text = "Error user not found",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            Text(
+                                text = "Try again?",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    showDialogError = showDialogError.not()
+                                    showDialog = showDialog.not()
+                                }
+                            ) {
+                                Text(text = "Try Again")
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        if(showDialogUserInRelationship){
+            Dialog(
+                onDismissRequest = { showDialogUserInRelationship = false
+                    showDialogUser = true},
+                content = {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(375.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+
+                            Text(
+                                text = "Error already in a relationship",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            Text(
+                                text = "Try again?",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    showDialogUserInRelationship = showDialogUserInRelationship.not()
+                                    showDialog = showDialog.not()
+                                }
+                            ) {
+                                Text(text = "Try Again")
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .background(
+                    color = Color(0xFFD9D9D9), // Color D9D9D9
+                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "How long they are together",
+                modifier = Modifier.wrapContentSize()
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+
+        Text(
+            text = "Daily Quests",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+        // Daily Quests
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .background(
+                    color = Color(0xFFD9D9D9), // Color D9D9D9
+                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Nested Column for the top row
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Quest Name
+                    Text(
+                        text = "Daily Quest 1",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Points and Heart Icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "100",
+                            modifier = Modifier.padding(end = 4.dp) // Adjusted padding as needed
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "heart",
+                            tint = Color.Red, // Heart icon color
+                            modifier = Modifier.size(16.dp) // Adjusted size for the heart icon
+                        )
+                    }
+                }
+// Bottom Row
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween, // Align items to the start and end
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Progress Bar (Replace with actual progress bar)
+                        // ...
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Adjusted spacing between progress bar and points achieved
+
+                        // Points Achieved
+                        Text(
+                            text = "50/100",
+                            modifier = Modifier.wrapContentSize() // No need for weight when using SpaceBetween
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp)) // Adjusted spacing between rows
+            }
+
+        }
+        // ... Rest of your content
     }
 }
 suspend fun getUserDataFromFirebase(): Perfil? {
@@ -629,6 +908,8 @@ fun MinimalDialog(onDismissRequest: () -> Unit) {
         }
     }
 }
+
+
 
 
 @Composable
