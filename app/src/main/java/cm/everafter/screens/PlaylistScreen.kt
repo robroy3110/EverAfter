@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,8 +75,7 @@ fun PlayListScreen(
 
     // State to hold playlists from the database
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
-    // State to hold the playlist being edited
-    var editingPlaylist by remember { mutableStateOf<Playlist?>(null) }
+
 
     var showDialog by remember { mutableStateOf(false) }
 
@@ -98,8 +98,6 @@ fun PlayListScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
-
-
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -135,7 +133,7 @@ fun PlayListScreen(
                         )
                     },
                     placeholder = {
-                        Text(text = "Search songs or playlists...")
+                        Text(text = "Search playlists in your library...")
                     },
                     modifier = Modifier
                         .weight(0.2f)
@@ -195,10 +193,7 @@ fun PlayListScreen(
                     val newPlaylists = snapshot.children.mapNotNull { it.getValue(Playlist::class.java) }
                     playlists = newPlaylists
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    // Handle onCancelled
-                }
+                override fun onCancelled(error: DatabaseError) {}
             }
 
             playlistsRef.addValueEventListener(playlistsListener)
@@ -209,42 +204,38 @@ fun PlayListScreen(
         }
 
         // Display playlists in groups of three per row
+        // Display playlists one below the other
         LazyColumn {
-            itemsIndexed(playlists.chunked(3)) { index, rowPlaylists ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    rowPlaylists.forEach { playlist ->
-
-                            // Display regular playlist item
-                            PlaylistItem(playlist = playlist) /*{
-                                // Set the editingPlaylist to the clicked playlist to enter editing state
-                                editingPlaylist = playlist
-                            }*/
-
-                        Spacer(modifier = Modifier.width(8.dp))
+            items(playlists) { playlist ->
+                // Display regular playlist item
+                PlaylistItem(
+                    playlist = playlist,
+                    onEditClick = {
+                        // Implement your logic when the edit button is clicked
+                        // For example, you can show the edit dialog
+                        // or navigate to another screen for editing
                     }
-                }
+                )
+
+                // Add spacing between playlists
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
+
 
     }
 }
 
-
-
 @Composable
-fun PlaylistItem(playlist: Playlist) {
+fun PlaylistItem(playlist: Playlist, onEditClick: () -> Unit) {
+    val context = LocalContext.current
+    val showDialog = remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.primary)
-            .clickable { /* Handle click on playlist */ }
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Display playlist image if available
         if (playlist.imageUri != null) {
@@ -259,14 +250,90 @@ fun PlaylistItem(playlist: Playlist) {
             )
         }
 
-        // Display playlist name
-        Text(
-            text = playlist.name,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
-        )
+        // Display playlist name and edit button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = playlist.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(0.8f)
+            )
+            IconButton(
+                onClick = onEditClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Edit Playlist",
+                    tint = Color(0xFF8C52FF),
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
+
+        // Show pop-up box when showDialog is true
+        if (showDialog.value) {
+            showPlaylistDetailsDialog(context, playlist, onDismiss = { showDialog.value = false })
+        }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@Composable
+fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, onDismiss: () -> Unit) {
+    var editedName by remember { mutableStateOf(playlist.name) }
+    OutlinedTextField(
+        value = editedName,
+        onValueChange = { editedName = it },
+        label = { Text("Name") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+    )
+    AlertDialog(
+        onDismissRequest = {
+            onDismiss.invoke()
+        },
+        title = {
+            Text(text = "Playlist Details")
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // Display playlist details
+                Text("Name: ${playlist.name}")
+                Text("Description: ${playlist.description}")
+                Text("Date: ${playlist.date}")
+                Text("Location: ${playlist.location}")
+                // Add more details as needed
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Save the edited name to Firebase or perform any other necessary action
+                    val updatedPlaylist = playlist.copy(name = editedName)
+                    saveEditedPlaylistToFirebase(updatedPlaylist)
+
+                    onDismiss.invoke()
+                }
+            ) {
+                Text(text = "Save")
+            }
+        },
+    )
+}
+
+fun saveEditedPlaylistToFirebase(updatedPlaylist: Any) {
+
 }
 
 
@@ -383,6 +450,33 @@ private fun savePlaylistToFirebase(playlist: Playlist) {
 
     // Save the playlist to the Firebase Realtime Database
     playlistsRef.child(playlistKey).setValue(playlist)
+}
+
+private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
+    val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+    val playlistsRef = database.getReference("Playlists")
+
+    val query = playlistsRef.orderByChild("name").equalTo(playlist.name)
+
+    query.addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            for (childSnapshot in snapshot.children) {
+                val playlistKey = childSnapshot.key
+                if (playlistKey != null) {
+                    // Update the playlist details
+                    playlistsRef.child(playlistKey).setValue(playlist)
+                    return
+                }
+            }
+
+            // If no matching playlist is found, you can handle it accordingly
+            // For example, you can log an error or show a message to the user.
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // Handle the error if the query is canceled
+        }
+    })
 }
 
 
