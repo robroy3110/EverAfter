@@ -109,10 +109,6 @@ fun EverAfter() {
                 AppNavigation(navController = navController)
             }
         }
-
-    } else if(currentDestination?.route == "camera_screen"){
-        val intent = Intent(context, FotoScreen::class.java)
-        context.startActivity(intent)
     } else {
         Scaffold(
             modifier = Modifier,

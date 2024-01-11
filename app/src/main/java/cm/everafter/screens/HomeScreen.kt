@@ -28,10 +28,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -291,8 +293,26 @@ fun HomeScreenRelation(modifier: Modifier,navController: NavController,thisUser:
                     modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                 )
             }
-            Text(text = thisUser.name)
-            Text(text = thisUser.username, color = Color.Black)
+
+            Button(
+                onClick = {
+                    navController.navigate(Screens.ProfileScreen.route)
+                },
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(start = 8.dp)
+                    .background(Color.Transparent)
+
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Profile",
+                    tint = Color.Magenta, // Black icon color
+                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+                )
+            }
+
+
         }
 
         // Divider line
@@ -886,30 +906,6 @@ suspend fun searchUserDataFromFirebase(username:String): Pair<Perfil,String>? {
     }
     return null
 }
-
-
-@Composable
-fun MinimalDialog(onDismissRequest: () -> Unit) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Text(
-                text = "This is a minimal dialog",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentSize(Alignment.Center),
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-
 
 
 @Composable
