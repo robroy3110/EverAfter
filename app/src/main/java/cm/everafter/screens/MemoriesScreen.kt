@@ -1,6 +1,8 @@
 package cm.everafter.screens
 
 import android.os.Bundle
+import android.widget.CalendarView
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -29,7 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
 
 sealed class MemoriesView {
-    object CalendarView : MemoriesView()
+    object CalendarPhotoView : MemoriesView()
     object PhotoGridView : MemoriesView()
     object MapView : MemoriesView()
 }
@@ -40,7 +43,7 @@ fun MemoriesScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.CalendarView) }
+    var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.CalendarPhotoView) }
 
     Scaffold(
         topBar = {
@@ -51,7 +54,7 @@ fun MemoriesScreen(
                 actions = {
                     Button(
                         onClick = {
-                            selectedView = MemoriesView.CalendarView
+                            selectedView = MemoriesView.CalendarPhotoView
                         }
                     ) {
                         Icon(Icons.Default.DateRange, contentDescription = "Calendar")
@@ -75,8 +78,8 @@ fun MemoriesScreen(
         }
     ) { paddingValues ->
         when (selectedView) {
-            is MemoriesView.CalendarView -> {
-                CalendarView(paddingValues)
+            is MemoriesView.CalendarPhotoView -> {
+                CalendarPhotoView(paddingValues)
             }
             is MemoriesView.PhotoGridView -> {
                 PhotoGridView(paddingValues)
@@ -89,16 +92,74 @@ fun MemoriesScreen(
 }
 
 @Composable
-fun CalendarView(paddingValues: PaddingValues) {
+fun CalendarPhotoView(paddingValues: PaddingValues) {
+
+    var date by remember {
+        mutableStateOf("")
+    }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+
     ) {
-        Text(text = "Calendar View")
-        // Conteúdo específico do calendário aqui
+        AndroidView(factory = { CalendarView(it) },
+            update = { it.setOnDateChangeListener { calendarView, year, month, day ->
+                date = "$day - ${month + 1} - $year"
+            }
+            })
+        Text(text = date)
     }
 }
+
+
+/*
+@Composable
+fun CalendarPhotoView(paddingValues: PaddingValues) {
+    var selectedDate by remember { mutableStateOf<Date?>(null) }
+    val photosByDate = // Mapa que associa Date a URL da foto, ou algo similar
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        AndroidView(factory = { context ->
+            CalendarView(context).apply {
+                setOnDateChangeListener { calendarView, year, month, day ->
+                    val selected = Calendar.getInstance().apply {
+                        set(year, month, day)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.time
+
+                    selectedDate = if (selectedDate == selected) null else selected
+                }
+            }
+        })
+
+        // Exibir círculo nas datas que possuem fotos
+        selectedDate?.let { date ->
+            val photoUrl = photosByDate[date]
+            if (photoUrl != null) {
+                // Exibe o círculo indicando a presença de uma foto
+                Box(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .background(color = Color.Blue, shape = CircleShape)
+                        .size(16.dp)
+                )
+
+                // Aqui você pode abrir uma nova tela ao clicar no círculo
+                // com a foto em tamanho maior
+            }
+        }
+    }
+}
+*/
 
 @Composable
 fun PhotoGridView(paddingValues: PaddingValues) {

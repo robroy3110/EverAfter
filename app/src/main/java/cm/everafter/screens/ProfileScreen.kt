@@ -144,7 +144,7 @@ fun ProfileScreen(
                     IconButton(onClick = {
                         auth.signOut()
                         navController.navigate(Screens.HomeScreen.route) }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Settings")
+                        Icon(imageVector = Icons.Default.Home, contentDescription = "Home")
                     }
                 }
             )
