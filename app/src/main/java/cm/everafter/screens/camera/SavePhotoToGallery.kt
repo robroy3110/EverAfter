@@ -1,4 +1,4 @@
-package cm.everafter.screens
+package cm.everafter.screens.camera
 
 import android.content.ContentResolver
 import android.content.ContentValues

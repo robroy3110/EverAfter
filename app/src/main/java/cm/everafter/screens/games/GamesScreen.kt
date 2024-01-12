@@ -1,4 +1,4 @@
-package cm.everafter.screens
+package cm.everafter.screens.games
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

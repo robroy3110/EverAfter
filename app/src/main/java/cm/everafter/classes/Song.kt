@@ -1,4 +1,4 @@
-package cm.everafter
+package cm.everafter.classes
 
 class Song(
     val name: String,

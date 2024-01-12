@@ -1,12 +1,10 @@
 package cm.everafter.screens
 
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,25 +27,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,35 +50,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import cm.everafter.Perfil
+import cm.everafter.classes.Perfil
 import cm.everafter.R
-import cm.everafter.RelationShip
+import cm.everafter.classes.RelationShip
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.UserViewModel
-import com.firebase.ui.auth.AuthUI
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import com.google.firebase.auth.auth
-import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.storage
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.colorResource
 
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -100,7 +94,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
-  if (auth.currentUser == null) {
+    if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
 
@@ -110,6 +104,7 @@ fun HomeScreen(
 
 
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: UserViewModel) {
@@ -182,7 +177,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         }
 
 
-       if(thisUser.relationship != "") {
+        if(thisUser.relationship != "") {
             LaunchedEffect(Unit) {
                 try {
                     val relationshipRef =
@@ -217,15 +212,16 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                     e.printStackTrace()
                 }
             }
-           otherUserImageBitMap?.let{
+            otherUserImageBitMap?.let{
                 HomeScreenRelation(
-                    modifier =  modifier,
+                    modifier = modifier,
                     navController = navController,
                     thisUser = thisUser,
                     userBitMap = userImageBitMap!!,
                     userBitMap2 = otherUserImageBitMap!!
                 )
-           }
+
+            }
 
         }else{
 
@@ -235,12 +231,11 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
 
 
-       }
+        }
         // Adjusted spacing between rows
     }
 
 }
-                    // ... Rest of your content
 
 
 @Composable
@@ -252,226 +247,256 @@ fun LoadingScreen(modifier: Modifier) {
     )
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenRelation(modifier: Modifier,navController: NavController,thisUser: Perfil, userBitMap: Bitmap, userBitMap2: Bitmap) {
+fun HomeScreenRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap, userBitMap2: Bitmap) {
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(20.dp)
+    Scaffold(
+        topBar = {
+            // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
+            // Se precisar de informações específicas, você pode personalizar a TopAppBar conforme necessário
+            TopAppBar(
+                title = { Text("This is us") },
+                actions = {
+                    Button(
+                        onClick = {
+                            navController.navigate(Screens.ProfileScreen.route)
+                        },
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .padding(start = 8.dp)
+                            .background(Color.Transparent)
+
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = Color.Black, // Black icon color
+                            modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            navController.navigate(Screens.ProfileScreen.route)
+                        },
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .padding(start = 8.dp)
+                            .background(Color.Transparent)
+
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Profile",
+                            tint = Color.Magenta, // Black icon color
+                            modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
+                        )
+                    }
+
+                }
+            )
+
+        }
 
     ) {
-        // Top Section: 'This Is Us' and Profile Button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 80.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            Text(
-                text = "This Is Us",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-            )
+            // Top Section: 'This Is Us' and Profile Button
+            item {
 
-            Button(
-                onClick = {
-                    navController.navigate(Screens.ProfileScreen.route)
-                },
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(start = 8.dp)
-                    .background(Color.Transparent)
-
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
-                    tint = Color.Black, // Black icon color
-                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
-                )
-            }
-
-            Button(
-                onClick = {
-                    navController.navigate(Screens.ProfileScreen.route)
-                },
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(start = 8.dp)
-                    .background(Color.Transparent)
-
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Profile",
-                    tint = Color.Magenta, // Black icon color
-                    modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
-                )
-            }
-
-
-        }
-
-        // Divider line
-        Divider(
-            color = Color(0xFF8C52FF), // Changed to the desired color
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Couple pics Section
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Profile Picture (Replace with actual user picture)
-            Image(
-                bitmap = userBitMap.asImageBitmap(), // Replace with your image resource
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
-
-            // Heart icon
-            Icon(
-                imageVector = Icons.Default.Favorite,
-                contentDescription = "heart",
-                tint = Color.Red, // Heart icon color
-                modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
-            )
-
-            Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
-
-            // Profile Picture (Replace with actual user picture)
-            Image(
-                bitmap = userBitMap2.asImageBitmap(),  // Replace with your image resource
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentScale = ContentScale.Crop,
-            )
-        }
-        Text(
-            text = "Date they met",
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 8.dp) // Adjusted padding as needed
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(
-                    color = Color(0xFFD9D9D9), // Color D9D9D9
-                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
-                )
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "How long they are together",
-                modifier = Modifier.wrapContentSize()
-            )
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = "Daily Quests",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-        // Daily Quests
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(
-                    color = Color(0xFFD9D9D9), // Color D9D9D9
-                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
-                )
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Nested Column for the top row
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Quest Name
-                    Text(
-                        text = "Daily Quest 1",
-                        modifier = Modifier.weight(1f)
+                    // Profile Picture (Replace with actual user picture)
+                    Image(
+                        bitmap = userBitMap.asImageBitmap(), // Replace with your image resource
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+                    // Heart icon
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "heart",
+                        tint = Color.Red, // Heart icon color
+                        modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                     )
 
-                    // Points and Heart Icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "100",
-                            modifier = Modifier.padding(end = 4.dp) // Adjusted padding as needed
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "heart",
-                            tint = Color.Red, // Heart icon color
-                            modifier = Modifier.size(16.dp) // Adjusted size for the heart icon
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(16.dp)) // Adjust spacing between images
+
+                    // Profile Picture (Replace with actual user picture)
+                    Image(
+                        bitmap = userBitMap2.asImageBitmap(),  // Replace with your image resource
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentScale = ContentScale.Crop,
+                    )
                 }
-// Bottom Row
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween, // Align items to the start and end
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Progress Bar (Replace with actual progress bar)
-                        // ...
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Adjusted spacing between progress bar and points achieved
-
-                        // Points Achieved
-                        Text(
-                            text = "50/100",
-                            modifier = Modifier.wrapContentSize() // No need for weight when using SpaceBetween
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp)) // Adjusted spacing between rows
             }
 
+            item {
+                Text(
+                    text = "Date they met",
+                    modifier = Modifier
+                        .padding(top = 8.dp) // Adjusted padding as needed
+                )
+            }
+
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .background(
+                            color = Color(0xFFD9D9D9), // Color D9D9D9
+                            shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                        )
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "How long they are together",
+                        modifier = Modifier.wrapContentSize()
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Daily Quests",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            }
+
+            item {
+                Text("Dates")
+                RelationshipProgressBar(0)
+
+                Text("Music")
+                RelationshipProgressBar(22)
+
+                Text("Gaming")
+                RelationshipProgressBar(8)
+
+                Text("Pictures")
+                RelationshipProgressBar(17)
+            }
         }
-        // ... Rest of your content
     }
 }
+
+@Composable
+fun RelationshipProgressBar(points: Int) {
+    val likersFill = points in 1..10
+    val loversFill = points in 11..20
+    val addictedFill = points > 20
+
+    var likersColor = Color(0xFFD9D9D9)
+    var loversColor = Color(0xFFD9D9D9)
+    var addictedColor = Color(0xFFD9D9D9)
+
+    if(likersFill) {
+        likersColor = colorResource(id = R.color.teal_700)
+    } else if (loversFill) {
+        likersColor = colorResource(id = R.color.teal_700)
+        loversColor = colorResource(id = R.color.purple_700)
+    } else if (addictedFill) {
+        likersColor = colorResource(id = R.color.teal_700)
+        loversColor = colorResource(id = R.color.purple_700)
+        addictedColor = colorResource(id = R.color.purple_500)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .background(
+                color = Color(0xFFD9D9D9),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(32.dp)
+        ) {
+            val totalSegments = 3
+            val segmentWidth = size.width / totalSegments
+            val outlineStroke = 2.dp.toPx()
+
+            for (i in 0 until totalSegments) {
+                // Preencher com a cor
+                val fillColor = when (i) {
+                    0 -> likersColor
+                    1 -> loversColor
+                    2 -> addictedColor
+                    else -> Color(0xFFD9D9D9)
+                }
+
+                drawRect(
+                    color = fillColor,
+                    size = Size(segmentWidth, 32.dp.toPx()),
+                    topLeft = Offset(segmentWidth * i, 0f)
+                )
+
+                // Desenhar a borda tracejada
+                drawRect(
+                    color = Color.Gray,
+                    size = Size(segmentWidth, 32.dp.toPx()),
+                    style = Stroke(width = outlineStroke),
+                    topLeft = Offset(segmentWidth * i, 0f)
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Likers",
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "Lovers",
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "Addicted",
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenNoRelation(modifier: Modifier,navController: NavController,thisUser: Perfil, userBitMap: Bitmap) {
+fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap) {
     var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var showDialogUser by remember { mutableStateOf(false) }
@@ -570,7 +595,7 @@ fun HomeScreenNoRelation(modifier: Modifier,navController: NavController,thisUse
                     .background(MaterialTheme.colorScheme.primary)
                     .clickable { showDialog = showDialog.not() },
                 contentScale = ContentScale.Crop,
-                )
+            )
         }
         Text(
             text = "Date they met",
@@ -793,84 +818,8 @@ fun HomeScreenNoRelation(modifier: Modifier,navController: NavController,thisUse
         Spacer(modifier = Modifier.height(10.dp))
 
 
-        Text(
-            text = "Daily Quests",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
 
-        // Daily Quests
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(
-                    color = Color(0xFFD9D9D9), // Color D9D9D9
-                    shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
-                )
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Nested Column for the top row
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Quest Name
-                    Text(
-                        text = "Daily Quest 1",
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // Points and Heart Icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "100",
-                            modifier = Modifier.padding(end = 4.dp) // Adjusted padding as needed
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "heart",
-                            tint = Color.Red, // Heart icon color
-                            modifier = Modifier.size(16.dp) // Adjusted size for the heart icon
-                        )
-                    }
-                }
-// Bottom Row
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween, // Align items to the start and end
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Progress Bar (Replace with actual progress bar)
-                        // ...
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Adjusted spacing between progress bar and points achieved
-
-                        // Points Achieved
-                        Text(
-                            text = "50/100",
-                            modifier = Modifier.wrapContentSize() // No need for weight when using SpaceBetween
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp)) // Adjusted spacing between rows
-            }
-
-        }
         // ... Rest of your content
     }
 }
@@ -963,5 +912,3 @@ fun DialogWithImage(
         }
     }
 }
-
-

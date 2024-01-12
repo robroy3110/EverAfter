@@ -1,9 +1,8 @@
-package cm.everafter.screens
+package cm.everafter.screens.home
 
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
@@ -19,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,19 +27,20 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import cm.everafter.classes.Perfil
 import cm.everafter.R
 import cm.everafter.navigation.Screens
-import com.firebase.ui.auth.AuthUI
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogIn(
-    navController : NavController,
+fun Register(
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val auth = Firebase.auth
+    var context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -64,6 +63,10 @@ fun LogIn(
 
         val email = remember { mutableStateOf(TextFieldValue()) }
         val password = remember { mutableStateOf(TextFieldValue()) }
+        val name = remember { mutableStateOf(TextFieldValue()) }
+        val username = remember { mutableStateOf(TextFieldValue()) }
+
+
 
         OutlinedTextField(
             label = { Text("Email") },
@@ -83,35 +86,59 @@ fun LogIn(
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { password.value = it }
         )
+        OutlinedTextField(
+            label = { Text("Your Name") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            value = name.value,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            onValueChange = { name.value = it }
+        )
+
+        OutlinedTextField(
+            label = { Text("Username") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            value = username.value,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            onValueChange = { username.value = it }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                auth.signInWithEmailAndPassword(
+                auth.createUserWithEmailAndPassword(
                     email.value.text.trim(),
                     password.value.text.trim()
                 ).addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         Log.d("Auth", "Success!")
+                        db.reference.child("Users").child(auth.currentUser!!.uid).setValue(
+                            Perfil(name.value.text, "", "", username.value.text.trim())
+                        )
+                        db.reference.child("Usernames").child(username.value.text.trim()).setValue(
+                            auth.currentUser!!.uid
+                        )
                         navController.navigate(Screens.HomeScreen.route)
                     } else {
                         Log.d("Auth", "Failed: ${task.exception}")
+                        task.exception?.printStackTrace()
                     }
                 }
             }
         ) {
-            Text(text = "Login")
+            Text(text = "Register")
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         ClickableText(
-            text = AnnotatedString("Register here."),
+            text = AnnotatedString("Login Here."),
             onClick = {
-                navController.navigate(Screens.RegisterScreen.route)
+                navController.navigate(Screens.LogInScreen.route)
             }
         )
     }
 }
+

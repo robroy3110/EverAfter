@@ -1,10 +1,12 @@
-package cm.everafter.screens
+package cm.everafter.screens.camera
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -14,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 
 @Composable
-fun NoPermissionScreen(navController: NavController, onRequestPermission:() -> Unit)
+fun NoPermissionScreen(navController: NavController, onRequestCameraPermission:() -> Unit,onRequestStoragePermission: () -> Unit)
 {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -22,8 +24,13 @@ fun NoPermissionScreen(navController: NavController, onRequestPermission:() -> U
         verticalArrangement = Arrangement.Center
     ){
         Text("Please grant the permission to use the camera")
-        Button(onClick = onRequestPermission) {
-            Icon(imageVector = Icons.Default.Face, contentDescription = "Camera")
+        Button(onClick = onRequestCameraPermission) {
+            Icon(imageVector = Icons.Default.Camera, contentDescription = "Camera")
+            Text(text = "Grant Permission")
+        }
+        Text("Please grant the permission to save the image")
+        Button(onClick = onRequestStoragePermission) {
+            Icon(imageVector = Icons.Default.SdStorage, contentDescription = "Camera")
             Text(text = "Grant Permission")
         }
     }

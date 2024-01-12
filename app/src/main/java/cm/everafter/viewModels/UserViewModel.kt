@@ -2,7 +2,7 @@ package cm.everafter.viewModels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import cm.everafter.Perfil
+import cm.everafter.classes.Perfil
 
 class UserViewModel : ViewModel() {
     var loggedInUser: Perfil? = null

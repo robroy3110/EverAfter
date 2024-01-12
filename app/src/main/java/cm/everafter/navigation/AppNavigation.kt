@@ -2,12 +2,17 @@ package cm.everafter.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import cm.everafter.Perfil
 import cm.everafter.screens.*
+import cm.everafter.screens.camera.FotoScreen
+import cm.everafter.screens.games.GamesScreen
+import cm.everafter.screens.home.LogIn
+import cm.everafter.screens.home.ProfileScreen
+import cm.everafter.screens.home.Register
+import cm.everafter.screens.memories.MemoriesScreen
+import cm.everafter.screens.playlist.PlayListScreen
 import cm.everafter.viewModels.UserViewModel
 
 @Composable
