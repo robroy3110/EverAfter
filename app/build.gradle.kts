@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -32,15 +33,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
@@ -94,4 +96,12 @@ dependencies {
     implementation ("androidx.camera:camera-extensions:${camerax_version}")
     implementation ("androidx.camera:camera-mlkit-vision:${camerax_version}")
     implementation ("com.google.accompanist:accompanist-permissions:0.31.1-alpha")
+
+    implementation ("io.insert-koin:koin-core:3.4.3")
+    implementation ("io.insert-koin:koin-android:3.4.3")
+    implementation ("io.insert-koin:koin-androidx-compose:3.4.6")
+
+    ////KOIN KSP////
+    implementation ("io.insert-koin:koin-annotations:1.2.2")
+    ksp ("io.insert-koin:koin-ksp-compiler:1.2.2")
 }
