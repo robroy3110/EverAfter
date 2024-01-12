@@ -672,7 +672,7 @@ fun HomeScreenNoRelation(modifier: Modifier,navController: NavController,thisUse
                                             val relationShipKey = newRelationShip.key
 
                                             newRelationShip.setValue(
-                                                RelationShip(0,"Today idk", auth.currentUser!!.uid,it.second.trim())
+                                                RelationShip(0,0,0,0,0,"Today idk", auth.currentUser!!.uid,it.second.trim())
                                             )
 
                                             db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(relationShipKey)
