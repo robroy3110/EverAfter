@@ -41,8 +41,8 @@ import cm.everafter.classes.CameraState
 import cm.everafter.viewModels.CameraViewModel
 import org.koin.androidx.compose.koinViewModel
 import cm.everafter.classes.rotateBitmap
-import cm.everafter.screens.home.auth
-import cm.everafter.screens.home.storageRef
+import cm.everafter.screens.auth
+import cm.everafter.screens.storageRef
 
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,8 +1,7 @@
-package cm.everafter.screens.playlist
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -13,17 +12,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +55,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.classes.Playlist
+import cm.everafter.classes.Song
+import cm.everafter.navigation.Screens
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -63,6 +69,7 @@ fun PlayListScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    println("PlayListScreen is being executed") // Add this line
     // Initialize Firebase Database
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
@@ -178,7 +185,7 @@ fun PlayListScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
+        /* ------------                          ------------------------- PLAYLISTS OF DB ------------------------------------- */
         // Playlist from the database
         // Retrieve playlists from the database
         DisposableEffect(Unit) {
@@ -197,8 +204,7 @@ fun PlayListScreen(
             }
         }
 
-        // Display playlists in groups of three per row
-        // Display playlists one below the other
+        // Display playlists
         LazyColumn {
             items(playlists) { playlist ->
                 // Display regular playlist item
@@ -208,6 +214,7 @@ fun PlayListScreen(
                         // Implement your logic when the edit button is clicked
                         // For example, you can show the edit dialog
                         // or navigate to another screen for editing
+                        navController.navigate(Screens.EditPlaylistScreen.route)
                     }
                 )
 
@@ -226,56 +233,54 @@ fun PlaylistItem(playlist: Playlist, onEditClick: () -> Unit) {
     val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primary)
+            .background(Color.Gray.copy(alpha = 0.1f)) // Temporary background color for debugging
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // Display playlist image if available
         if (playlist.imageUri != null) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder image, replace with actual logic
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = null,
                 modifier = Modifier
                     .size(64.dp)
                     .clip(MaterialTheme.shapes.medium)
-                    .padding(8.dp),
-                contentScale = ContentScale.Crop
             )
         }
 
         // Display playlist name and edit button
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .weight(1f)
+                .padding(start = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = playlist.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                modifier = Modifier.weight(0.8f)
             )
+
             IconButton(
                 onClick = onEditClick
             ) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Playlist",
                     tint = Color(0xFF8C52FF),
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Show pop-up box when showDialog is true
-        if (showDialog.value) {
-            showPlaylistDetailsDialog(context, playlist, onDismiss = { showDialog.value = false })
-        }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -324,6 +329,11 @@ fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, on
             }
         },
     )
+}
+
+@Composable
+fun Column(modifier: Modifier, content: () -> Unit) {
+
 }
 
 fun saveEditedPlaylistToFirebase(updatedPlaylist: Any) {
@@ -472,9 +482,3 @@ private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
         }
     })
 }
-
-
-
-
-
-

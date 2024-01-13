@@ -34,6 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import cm.everafter.navigation.Screens
+import cm.everafter.screens.auth
+import cm.everafter.screens.db
 import cm.everafter.viewModels.UserViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage

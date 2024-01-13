@@ -1,5 +1,6 @@
 package cm.everafter.navigation
 
+import PlayListScreen
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -12,7 +13,8 @@ import cm.everafter.screens.home.LogIn
 import cm.everafter.screens.home.ProfileScreen
 import cm.everafter.screens.home.Register
 import cm.everafter.screens.memories.MemoriesScreen
-import cm.everafter.screens.playlist.PlayListScreen
+import cm.everafter.screens.playlist.EditPlaylistScreen
+
 import cm.everafter.viewModels.UserViewModel
 
 @Composable
@@ -42,6 +44,9 @@ fun AppNavigation(navController: NavHostController) {
         }
         composable(route = Screens.PlaylistScreen.route){
             PlayListScreen(navController = navController)
+        }
+        composable(route = Screens.EditPlaylistScreen.route){
+            EditPlaylistScreen(navController = navController)
         }
         composable(route = Screens.LogInScreen.route){
             LogIn(navController = navController)
