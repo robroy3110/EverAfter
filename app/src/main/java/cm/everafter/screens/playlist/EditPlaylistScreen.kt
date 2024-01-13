@@ -56,10 +56,7 @@ fun EditPlaylistScreen(
     val playlistImage = painterResource(id = R.drawable.ic_launcher_foreground)
     //val playlistName = "Playlist Name"
     val locationAndDate = "Location, Date"
-    val songs = listOf(
-        Song("Song 1","artist1", "album1", "uri1")
-        // Add more songs as needed
-    )
+
 
     // Content of the screen
     Column(
@@ -177,17 +174,8 @@ fun EditPlaylistScreen(
             }
         }
 
-        // List of Songs
-        LazyColumn {
-            items(songs) { song ->
-                SongItem(song = song)
-                Divider(
-                    color = MaterialTheme.colorScheme.primary,
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-        }
+        //TODO: List of Songs
+
     }
 }
 
