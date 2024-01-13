@@ -52,6 +52,7 @@ import com.google.firebase.database.database
 @Composable
 fun AddSongsScreen(
     navController: NavController,
+    playlistViewModel: PlaylistViewModel,
     modifier: Modifier = Modifier
 ) {
     // Fetch the list of songs from the repository
@@ -85,11 +86,13 @@ fun AddSongsScreen(
                 }
             },
         )
-
         // Display the list of available songs
         LazyColumn {
             items(availableSongs.value) { song ->
-                SongItem(song = song, onItemClick = {})
+                SongItem(song = song, onItemClick = {
+                    // Handle song item click
+                    playlistViewModel.playSong(song)
+                })
                 Divider(
                     color = MaterialTheme.colorScheme.primary,
                     thickness = 1.dp,

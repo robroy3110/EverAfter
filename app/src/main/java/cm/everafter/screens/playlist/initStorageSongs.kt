@@ -9,7 +9,7 @@ fun initializeSongs() {
     clearSongsFromDatabase()
 
     // Create Song instances and associate them with MP3 files
-    val song1 = createSong("Valerie", "Amy Winehouse", "Back To Black", "AWValerie", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3")
+    val song1 = createSong("Valerie", "Amy Winehouse", "Back To Black", "", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3")
     /*
     val song2 = createSong("Valerie", "Amy Winehouse", "Back To Black", "AWValerie", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3")
     val song3 = createSong("Valerie", "Amy Winehouse", "Back To Black", "AWValerie", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3")
