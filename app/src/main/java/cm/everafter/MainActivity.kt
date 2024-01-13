@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
+import cm.everafter.screens.playlist.initializeSongs
 import cm.everafter.ui.theme.EverAfterTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,6 +25,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    initializeSongs()
                     EverAfter()
                 }
             }

@@ -122,7 +122,7 @@ fun EverAfter() {
             }
         }
     }
-    initializeSongs()
+
 }
 
 @Composable
