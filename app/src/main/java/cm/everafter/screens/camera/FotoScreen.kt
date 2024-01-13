@@ -21,18 +21,17 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 fun FotoScreen(navController:NavController){
 
     val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
-    val storagePermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    CheckPermission(navController,hasCameraPermission = cameraPermissionState.status.isGranted,storagePermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest,storagePermissionState::launchPermissionRequest)
+    CheckPermission(navController,hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest)
 
 
 }
 
 @Composable
-fun CheckPermission(navController:NavController,hasCameraPermission: Boolean,hasStoragePermission:Boolean,onRequestCameraPermission: () -> Unit,onRequestStoragePermission: () -> Unit){
-    if(hasCameraPermission && hasStoragePermission){
+fun CheckPermission(navController:NavController,hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit){
+    if(hasCameraPermission){
         CameraScreen(navController)
     }else{
-        NoPermissionScreen(navController,onRequestCameraPermission,onRequestStoragePermission)
+        NoPermissionScreen(navController,onRequestCameraPermission)
     }
 
 }

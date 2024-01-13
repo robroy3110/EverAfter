@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 
 @Composable
-fun NoPermissionScreen(navController: NavController, onRequestCameraPermission:() -> Unit,onRequestStoragePermission: () -> Unit)
+fun NoPermissionScreen(navController: NavController, onRequestCameraPermission:() -> Unit)
 {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -26,11 +26,6 @@ fun NoPermissionScreen(navController: NavController, onRequestCameraPermission:(
         Text("Please grant the permission to use the camera")
         Button(onClick = onRequestCameraPermission) {
             Icon(imageVector = Icons.Default.Camera, contentDescription = "Camera")
-            Text(text = "Grant Permission")
-        }
-        Text("Please grant the permission to save the image")
-        Button(onClick = onRequestStoragePermission) {
-            Icon(imageVector = Icons.Default.SdStorage, contentDescription = "Camera")
             Text(text = "Grant Permission")
         }
     }
