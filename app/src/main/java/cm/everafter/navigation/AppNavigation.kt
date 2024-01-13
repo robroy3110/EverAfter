@@ -45,9 +45,13 @@ fun AppNavigation(navController: NavHostController) {
         composable(route = Screens.PlaylistScreen.route){
             PlayListScreen(navController = navController)
         }
-        composable(route = Screens.EditPlaylistScreen.route){
-            EditPlaylistScreen(navController = navController)
+        composable(route = Screens.EditPlaylistScreen.route) {
+            EditPlaylistScreen(
+                navController = navController,
+                playlistViewModel = viewModel()
+            )
         }
+
         composable(route = Screens.LogInScreen.route){
             LogIn(navController = navController)
         }

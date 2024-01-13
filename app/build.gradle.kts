@@ -75,6 +75,7 @@ dependencies {
     implementation ("androidx.cardview:cardview:1.0.0")
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.test:monitor:1.6.1")
+    implementation("com.google.firebase:firebase-firestore:24.10.0")
     androidTestImplementation("junit:junit:4.12")
 
     debugImplementation ("androidx.compose.ui:ui-tooling")

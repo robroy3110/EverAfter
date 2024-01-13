@@ -1,3 +1,4 @@
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,16 +53,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.classes.Playlist
 import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
+import cm.everafter.viewModels.PlaylistViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.storage.storage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,15 +73,15 @@ fun PlayListScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    println("PlayListScreen is being executed") // Add this line
+    // Inside your composable function
+    val playlistViewModel: PlaylistViewModel = viewModel()
+
     // Initialize Firebase Database
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
 
     // State to hold playlists from the database
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
-
-
     var showDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -203,42 +207,37 @@ fun PlayListScreen(
                 playlistsRef.removeEventListener(playlistsListener)
             }
         }
-
         // Display playlists
         LazyColumn {
             items(playlists) { playlist ->
                 // Display regular playlist item
                 PlaylistItem(
                     playlist = playlist,
-                    onEditClick = {
-                        // Implement your logic when the edit button is clicked
-                        // For example, you can show the edit dialog
-                        // or navigate to another screen for editing
+
+                    onPlaylistClick = { playlist ->
+                        val playlistNameToShowinDetails = playlist.name
+                        println("PLAYLIST NAME SENTTTT "+ playlistNameToShowinDetails)
+                        playlistViewModel.selectPlaylist(playlistNameToShowinDetails)
                         navController.navigate(Screens.EditPlaylistScreen.route)
                     }
-                )
 
+                )
                 // Add spacing between playlists
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
-
-
-
     }
 }
 
 @Composable
-fun PlaylistItem(playlist: Playlist, onEditClick: () -> Unit) {
-    val context = LocalContext.current
-    val showDialog = remember { mutableStateOf(false) }
-
+fun PlaylistItem(playlist: Playlist, onPlaylistClick: (Playlist) -> Unit) {
     Row(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
             .background(Color.Gray.copy(alpha = 0.1f)) // Temporary background color for debugging
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onPlaylistClick.invoke(playlist) }, // Handle click on the whole playlist item
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -266,16 +265,6 @@ fun PlaylistItem(playlist: Playlist, onEditClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
             )
-
-            IconButton(
-                onClick = onEditClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Playlist",
-                    tint = Color(0xFF8C52FF),
-                )
-            }
         }
     }
 }
@@ -315,7 +304,9 @@ fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, on
                 // Add more details as needed
             }
         },
+
         confirmButton = {
+            /*
             Button(
                 onClick = {
                     // Save the edited name to Firebase or perform any other necessary action
@@ -326,7 +317,9 @@ fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, on
                 }
             ) {
                 Text(text = "Save")
-            }
+            }*/
+
+
         },
     )
 }

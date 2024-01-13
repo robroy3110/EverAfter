@@ -17,11 +17,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,19 +37,24 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.classes.Song
+import cm.everafter.viewModels.PlaylistViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPlaylistScreen(
     navController: NavController,
+    playlistViewModel: PlaylistViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Extract playlist name from arguments
+    val playlistName: String? = navController.currentBackStackEntry
+        ?.arguments?.getString("playlistName")
     // Placeholder data for testing
     val playlistImage = painterResource(id = R.drawable.ic_launcher_foreground)
-    val playlistName = "Playlist Name"
+    //val playlistName = "Playlist Name"
     val locationAndDate = "Location, Date"
     val songs = listOf(
         Song("Song 1","artist1", "album1", "uri1")
-
         // Add more songs as needed
     )
 
@@ -56,19 +64,41 @@ fun EditPlaylistScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Add an IconButton to navigate back
-        IconButton(
-            onClick = {
-                // Navigate back to the previous screen
-                navController.popBackStack()
-            }
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Go Back",
-                tint = Color(0xFF8C52FF)
-            )
-        }
+        // AppBar with back and edit buttons
+        TopAppBar(
+            title = { /* You can add a title here if needed */ },
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        // Navigate back to the previous screen
+                        navController.popBackStack()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Go Back",
+                        tint = Color(0xFF8C52FF)
+                    )
+                }
+            },
+            actions = {
+                // Edit IconButton
+                IconButton(
+                    onClick = {
+                        // Handle edit button click
+                        // You can navigate to the edit screen or perform any other action
+                        // For example: navController.navigate("edit_screen_route")
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = Color(0xFF8C52FF)
+                    )
+                }
+            },
+
+        )
 
         // Center only the image, playlist name, location, and date
         Column(
@@ -88,12 +118,14 @@ fun EditPlaylistScreen(
             )
 
             // Playlist Name
-            Text(
-                text = playlistName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            if (playlistName != null) {
+                Text(
+                    text = playlistName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
 
             // Location and Date
             Text(
@@ -109,7 +141,6 @@ fun EditPlaylistScreen(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(Color(0xFF8C52FF))
-
         )
 
         // Section: Songs
