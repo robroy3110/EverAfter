@@ -10,6 +10,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomStart
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -40,21 +43,19 @@ import androidx.navigation.NavController
 import cm.everafter.classes.CameraState
 import cm.everafter.classes.rotateBitmap
 import cm.everafter.screens.auth
-import cm.everafter.screens.storageRef
 import cm.everafter.viewModels.CameraViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
 import org.koin.androidx.compose.koinViewModel
 import java.io.ByteArrayOutputStream
 import java.text.DateFormat.getDateInstance
-import java.text.SimpleDateFormat
 import java.util.Date
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun CameraScreen(navController : NavController,viewModel: CameraViewModel = koinViewModel()){
+fun CameraScreen(viewModel: CameraViewModel = koinViewModel()){
 
     val cameraState: CameraState by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -106,10 +107,12 @@ fun CameraScreen(navController : NavController,viewModel: CameraViewModel = koin
 
         })
         if (lastCapturedPhoto != null) {
-            LastPhotoPreview(
-                //modifier = Modifier.align(alignment = BottomStart),
+            Box(modifier = Modifier){
+                LastPhotoPreview(
+                modifier = Modifier.align(BottomStart),
                 lastCapturedPhoto = lastCapturedPhoto
-            )
+            )}
+
         }
 
     }.also{

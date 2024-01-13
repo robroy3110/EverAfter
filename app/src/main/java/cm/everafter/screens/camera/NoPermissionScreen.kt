@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 
 @Composable
-fun NoPermissionScreen(navController: NavController, onRequestCameraPermission:() -> Unit)
+fun NoPermissionScreen(onRequestCameraPermission:() -> Unit)
 {
     Column(
         modifier = Modifier.fillMaxSize(),

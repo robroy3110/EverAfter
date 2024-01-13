@@ -18,20 +18,20 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 //POR FIM NAO ESQUECER O BOTAO DO MAIN
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun FotoScreen(navController:NavController){
+fun FotoScreen(){
 
     val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
-    CheckPermission(navController,hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest)
+    CheckPermission(hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest)
 
 
 }
 
 @Composable
-fun CheckPermission(navController:NavController,hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit){
+fun CheckPermission(hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit){
     if(hasCameraPermission){
-        CameraScreen(navController)
+        CameraScreen()
     }else{
-        NoPermissionScreen(navController,onRequestCameraPermission)
+        NoPermissionScreen(onRequestCameraPermission)
     }
 
 }
