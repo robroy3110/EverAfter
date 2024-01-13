@@ -38,11 +38,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import cm.everafter.classes.CameraState
-import cm.everafter.viewModels.CameraViewModel
-import org.koin.androidx.compose.koinViewModel
 import cm.everafter.classes.rotateBitmap
 import cm.everafter.screens.auth
 import cm.everafter.screens.storageRef
+import cm.everafter.viewModels.CameraViewModel
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
+import org.koin.androidx.compose.koinViewModel
+import java.io.ByteArrayOutputStream
+import java.text.DateFormat.getDateInstance
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +61,8 @@ fun CameraScreen(navController : NavController,viewModel: CameraViewModel = koin
     val lifeCycleOwner = LocalLifecycleOwner.current
     val cameraController = remember{ LifecycleCameraController(context)}
     val lastCapturedPhoto : Bitmap? = cameraState.capturedImage
+    val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
+    val storageRef = storage.reference
     Scaffold(
         Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -66,9 +74,16 @@ fun CameraScreen(navController : NavController,viewModel: CameraViewModel = koin
 
                     cameraController.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback(){
                         override fun onCaptureSuccess(image: ImageProxy){
-                            val riversRef = storageRef.child("ProfilePics/${auth.currentUser!!.uid}")
                            // var uploadTask = riversRef.putFile()
                             val bitmapImage = image.toBitmap().rotateBitmap(image.imageInfo.rotationDegrees)
+                            val baos = ByteArrayOutputStream()
+                            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                            val imageBytes = baos.toByteArray()
+                            val sdf = getDateInstance()
+
+                            val currentDateAndTime = sdf.format(Date())
+                            val riversRef = storageRef.child("Memories/${auth.currentUser!!.uid}/${currentDateAndTime}/idk")
+                            riversRef.putBytes(imageBytes)
                             viewModel.storePhoto(bitmapImage)
                             image.close()
                         }

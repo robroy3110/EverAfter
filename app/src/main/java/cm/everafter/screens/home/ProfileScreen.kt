@@ -61,7 +61,7 @@ fun ProfileScreen(
             if(uri != null){
                 Log.i("TESETE","ENTREUAGW${uri}")
                 //var file = Uri.fromFile(File(uri.toString()))
-                val riversRef = storageRef.child("ProfilePics/${auth.currentUser!!.uid}")
+                val riversRef = storageRef.child("ProfilePics/${auth.currentUser!!.uid}.jpg")
                 var uploadTask = riversRef.putFile(uri)
 
 // Register observers to listen for when the download is done or if it fails
@@ -70,7 +70,7 @@ fun ProfileScreen(
                 }.addOnSuccessListener { taskSnapshot ->
 
                     db.reference.child("Users").child(auth.currentUser!!.uid).child("image").setValue(
-                        auth.currentUser!!.uid
+                        "${auth.currentUser!!.uid}.jpg"
                     )
                     val contentResolver: ContentResolver =context.contentResolver
 
