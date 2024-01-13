@@ -2,6 +2,7 @@ package cm.everafter.screens.camera
 
 import androidx.navigation.NavController
 import androidx.compose.runtime.Composable
+import cm.everafter.viewModels.UserViewModel
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
@@ -18,18 +19,15 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 //POR FIM NAO ESQUECER O BOTAO DO MAIN
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun FotoScreen(){
-
+fun FotoScreen(userViewModel: UserViewModel){
     val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
-    CheckPermission(hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest)
-
-
+    CheckPermission(hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest,userViewModel)
 }
 
 @Composable
-fun CheckPermission(hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit){
+fun CheckPermission(hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit,userViewModel: UserViewModel){
     if(hasCameraPermission){
-        CameraScreen()
+        CameraScreen(userViewModel = userViewModel)
     }else{
         NoPermissionScreen(onRequestCameraPermission)
     }

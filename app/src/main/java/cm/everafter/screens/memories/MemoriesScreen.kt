@@ -95,6 +95,10 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
         mutableStateOf("")
     }
 
+    var dateFireBase by remember {
+        mutableStateOf("")
+    }
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,6 +108,7 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
         AndroidView(factory = { CalendarView(it) },
             update = { it.setOnDateChangeListener { calendarView, year, month, day ->
                 date = "$day - ${month + 1} - $year"
+                dateFireBase = "${getMonthByNumber(month+1)} $day,$year"
             }
             })
         Text(text = date)
@@ -212,5 +217,46 @@ fun onMapReady(googleMap: GoogleMap) {
 
     // Mova a câmera para a posição e zoom desejados
     googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+}
+
+fun getMonthByNumber(month: Int) : String{
+    when (month) {
+        1 -> {
+            return "Jan"
+        }
+        2 -> {
+            return "Feb"
+        }
+        3 -> {
+            return "Mar"
+        }
+        4 -> {
+            return "Apr"
+        }
+        5 -> {
+            return "May"
+        }
+        6 -> {
+            return "Jun"
+        }
+        7 -> {
+            return "Jul"
+        }
+        8 -> {
+            return "Aug"
+        }
+        9 -> {
+            return "Sep"
+        }
+        10 -> {
+            return "Oct"
+        }
+        11 -> {
+            return "Nov"
+        }
+        else -> {
+            return "Dec"
+        }
+    }
 }
 

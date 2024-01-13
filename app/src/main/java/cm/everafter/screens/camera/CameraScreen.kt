@@ -44,6 +44,7 @@ import cm.everafter.classes.CameraState
 import cm.everafter.classes.rotateBitmap
 import cm.everafter.screens.auth
 import cm.everafter.viewModels.CameraViewModel
+import cm.everafter.viewModels.UserViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
 import org.koin.androidx.compose.koinViewModel
@@ -55,9 +56,9 @@ import java.util.Date
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun CameraScreen(viewModel: CameraViewModel = koinViewModel()){
+fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewModel: UserViewModel){
 
-    val cameraState: CameraState by viewModel.state.collectAsStateWithLifecycle()
+    val cameraState: CameraState by cameraViewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifeCycleOwner = LocalLifecycleOwner.current
     val cameraController = remember{ LifecycleCameraController(context)}
@@ -71,21 +72,26 @@ fun CameraScreen(viewModel: CameraViewModel = koinViewModel()){
                 text = { Text("Take Photo") },
                 icon = {Icon(imageVector = Icons.Default.Camera, contentDescription = "Camera capture icon")},
                 onClick = {
+
                     val mainExecutor = ContextCompat.getMainExecutor(context)
 
                     cameraController.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback(){
                         override fun onCaptureSuccess(image: ImageProxy){
-                           // var uploadTask = riversRef.putFile()
+
                             val bitmapImage = image.toBitmap().rotateBitmap(image.imageInfo.rotationDegrees)
+
                             val baos = ByteArrayOutputStream()
                             bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, baos)
                             val imageBytes = baos.toByteArray()
-                            val sdf = getDateInstance()
 
+                            val sdf = getDateInstance()
                             val currentDateAndTime = sdf.format(Date())
-                            val riversRef = storageRef.child("Memories/${auth.currentUser!!.uid}/${currentDateAndTime}/idk")
+
+                            val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${currentDateAndTime}/idk")
                             riversRef.putBytes(imageBytes)
-                            viewModel.storePhoto(bitmapImage)
+
+                            cameraViewModel.storePhoto(bitmapImage)
+
                             image.close()
                         }
                     })})

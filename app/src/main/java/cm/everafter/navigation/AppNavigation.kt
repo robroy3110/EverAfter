@@ -31,7 +31,7 @@ fun AppNavigation(navController: NavHostController) {
             MemoriesScreen(navController = navController)
         }
         composable(route = Screens.CameraScreen.route){
-            FotoScreen()
+            FotoScreen(userViewModel)
         }
         composable(route = Screens.SearchUserScreen.route){
             SearchUserScreen(navController = navController)
