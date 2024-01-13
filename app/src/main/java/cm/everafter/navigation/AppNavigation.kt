@@ -13,6 +13,7 @@ import cm.everafter.screens.home.LogIn
 import cm.everafter.screens.home.ProfileScreen
 import cm.everafter.screens.home.Register
 import cm.everafter.screens.memories.MemoriesScreen
+import cm.everafter.screens.playlist.AddSongsScreen
 import cm.everafter.screens.playlist.EditPlaylistScreen
 
 import cm.everafter.viewModels.UserViewModel
@@ -51,7 +52,9 @@ fun AppNavigation(navController: NavHostController) {
                 playlistViewModel = viewModel()
             )
         }
-
+        composable(route = Screens.AddSongsScreen.route) {
+            AddSongsScreen(navController = navController)
+        }
         composable(route = Screens.LogInScreen.route){
             LogIn(navController = navController)
         }

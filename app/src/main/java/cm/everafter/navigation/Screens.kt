@@ -5,13 +5,15 @@ sealed class Screens(val route: String) {
     object CameraScreen : Screens("camera_screen")
     object GamesScreen : Screens("games_screen")
     object PlaylistScreen : Screens("playlist_screen")
+    object EditPlaylistScreen : Screens("edit_playlist_screen")
+    object AddSongsScreen : Screens("add_songs_screen")
     object ProfileScreen : Screens("profile_screen")
     object MemoriesScreen : Screens("memories_screen")
     object LogInScreen : Screens("login_screen")
     object RegisterScreen : Screens("register_screen")
 
     object SearchUserScreen : Screens("searchUser_screen")
-    object EditPlaylistScreen : Screens("edit_playlist_screen")
+
 
 
 
