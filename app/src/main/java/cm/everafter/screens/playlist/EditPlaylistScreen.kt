@@ -2,6 +2,7 @@ package cm.everafter.screens.playlist
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Divider
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.classes.Song
+import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,10 +56,7 @@ fun EditPlaylistScreen(
     val playlistImage = painterResource(id = R.drawable.ic_launcher_foreground)
     //val playlistName = "Playlist Name"
     val locationAndDate = "Location, Date"
-    val songs = listOf(
-        Song("Song 1","artist1", "album1", "uri1")
-        // Add more songs as needed
-    )
+
 
     // Content of the screen
     Column(
@@ -142,26 +142,40 @@ fun EditPlaylistScreen(
                 .height(1.dp)
                 .background(Color(0xFF8C52FF))
         )
-
         // Section: Songs
-        Text(
-            text = "Songs",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Text "Songs"
+            Text(
+                text = "Songs",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.weight(0.8f)
+            )
 
-        // List of Songs
-        LazyColumn {
-            items(songs) { song ->
-                SongItem(song = song)
-                Divider(
-                    color = MaterialTheme.colorScheme.primary,
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 4.dp)
+            // Add Button
+            IconButton(
+                onClick = {
+                    // Handle add button click
+                    // Navigate to the AddSongsScreen or perform any other action
+                    navController.navigate(Screens.AddSongsScreen.route)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = Color(0xFF8C52FF),
                 )
             }
         }
+
+        //TODO: List of Songs
+
     }
 }
 

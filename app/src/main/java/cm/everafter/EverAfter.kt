@@ -28,6 +28,7 @@ import cm.everafter.navigation.NavItem
 import cm.everafter.navigation.Screens
 
 import androidx.navigation.compose.currentBackStackEntryAsState
+import cm.everafter.screens.playlist.initializeSongs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,11 +122,12 @@ fun EverAfter() {
             }
         }
     }
+
 }
 
 @Composable
 fun EverAfterBottomBar() {
-    
+
 }
 
 
