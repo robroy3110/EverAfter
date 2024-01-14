@@ -13,11 +13,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import cm.everafter.screens.playlist.initializeSongs
 import cm.everafter.ui.theme.EverAfterTheme
+import coil.Coil
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.util.DebugLogger
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), ImageLoaderFactory {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Initialize Coil
+        Coil.setImageLoader(
+            ImageLoader.Builder(this)
+            .logger(DebugLogger()) // Remove this line in release builds
+            .build())
         setContent {
             EverAfterTheme {
                 // A surface container using the 'background' color from the theme
@@ -30,5 +39,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .logger(DebugLogger()) // Remove this line in release builds
+            .build()
     }
 }

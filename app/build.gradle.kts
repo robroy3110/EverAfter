@@ -121,4 +121,7 @@ dependencies {
     ////KOIN KSP////
     implementation ("io.insert-koin:koin-annotations:1.2.2")
     ksp ("io.insert-koin:koin-ksp-compiler:1.2.2")
+
+
+    implementation("io.coil-kt:coil-compose:1.4.0")
 }

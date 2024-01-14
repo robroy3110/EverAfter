@@ -42,6 +42,7 @@ import androidx.navigation.NavController
 import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
+import coil.compose.rememberImagePainter
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -122,7 +123,6 @@ fun getAvailableSongs(onSongsLoaded: (List<Song>) -> Unit) {
                     songsList.add(it)
                 }
             }
-
             // Notify the caller that songs are loaded
             onSongsLoaded(songsList)
         }
@@ -141,7 +141,16 @@ fun SongItem(song: Song, onItemClick: (Song) -> Unit) {
             .clickable { onItemClick.invoke(song) }, // Pass the clicked song to onItemClick
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Load and display the image
+        Image(
+            painter = rememberImagePainter(data = song.imageUrl),
+            contentDescription = "Song Image",
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+        )
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = song.name, fontSize = 16.sp)
     }
 }
+

@@ -441,7 +441,7 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
 private fun savePlaylistToFirebase(playlist: Playlist) {
     val database =Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
-    println("PLAYLISts TREF" + playlistsRef)
+
     // Generate a unique key for the playlist
     val playlistKey = playlistsRef.push().key ?: return
 
