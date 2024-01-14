@@ -3,6 +3,7 @@ package cm.everafter.screens
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -78,6 +80,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.colorResource
 
 
@@ -218,7 +222,8 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                     navController = navController,
                     thisUser = thisUser,
                     userBitMap = userImageBitMap!!,
-                    userBitMap2 = otherUserImageBitMap!!
+                    userBitMap2 = otherUserImageBitMap!!,
+                    relationShip = relationShip,
                 )
 
             }
@@ -250,7 +255,14 @@ fun LoadingScreen(modifier: Modifier) {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap, userBitMap2: Bitmap) {
+fun HomeScreenRelation(
+    modifier: Modifier,
+    navController: NavController,
+    thisUser: Perfil,
+    userBitMap: Bitmap,
+    userBitMap2: Bitmap,
+    relationShip: RelationShip?
+) {
 
     Scaffold(
         topBar = {
@@ -354,7 +366,7 @@ fun HomeScreenRelation(modifier: Modifier, navController: NavController, thisUse
 
             item {
                 Text(
-                    text = "Date they met",
+                    text = relationShip!!.date,
                     modifier = Modifier
                         .padding(top = 8.dp) // Adjusted padding as needed
                 )
@@ -391,16 +403,16 @@ fun HomeScreenRelation(modifier: Modifier, navController: NavController, thisUse
 
             item {
                 Text("Dates")
-                RelationshipProgressBar(0)
+                RelationshipProgressBar(relationShip!!.pointsDate)
 
                 Text("Music")
-                RelationshipProgressBar(22)
+                RelationshipProgressBar(25)
 
                 Text("Gaming")
-                RelationshipProgressBar(8)
+                RelationshipProgressBar(relationShip!!.pointsGames)
 
                 Text("Pictures")
-                RelationshipProgressBar(17)
+                RelationshipProgressBar(relationShip!!.pointsPictures)
             }
         }
     }
@@ -417,15 +429,17 @@ fun RelationshipProgressBar(points: Int) {
     var addictedColor = Color(0xFFD9D9D9)
 
     if(likersFill) {
-        likersColor = colorResource(id = R.color.teal_700)
+        likersColor = Color(0xFFD896FF)
     } else if (loversFill) {
-        likersColor = colorResource(id = R.color.teal_700)
-        loversColor = colorResource(id = R.color.purple_700)
+        likersColor = Color(0xFFD896FF)
+        loversColor = Color(0xFFBE29EC)
     } else if (addictedFill) {
-        likersColor = colorResource(id = R.color.teal_700)
-        loversColor = colorResource(id = R.color.purple_700)
-        addictedColor = colorResource(id = R.color.purple_500)
+        likersColor = Color(0xFFD896FF)
+        loversColor = Color(0xFFBE29EC)
+        addictedColor = Color(0xFF800080)
     }
+
+
 
     Box(
         modifier = Modifier
@@ -438,17 +452,18 @@ fun RelationshipProgressBar(points: Int) {
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
+
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(32.dp)
+                .height(60.dp)
         ) {
             val totalSegments = 3
             val segmentWidth = size.width / totalSegments
+            val segmentHeight = 60.dp.toPx() // Ajuste a altura dos quadrados aqui
             val outlineStroke = 2.dp.toPx()
 
             for (i in 0 until totalSegments) {
-                // Preencher com a cor
                 val fillColor = when (i) {
                     0 -> likersColor
                     1 -> loversColor
@@ -456,43 +471,63 @@ fun RelationshipProgressBar(points: Int) {
                     else -> Color(0xFFD9D9D9)
                 }
 
+                // Mude a cor da borda para roxo (purple)
+                val borderColor = Color(0xFF660066) // Código de cor para roxo (purple)
+
                 drawRect(
                     color = fillColor,
-                    size = Size(segmentWidth, 32.dp.toPx()),
+                    size = Size(segmentWidth, segmentHeight),
                     topLeft = Offset(segmentWidth * i, 0f)
                 )
 
-                // Desenhar a borda tracejada
                 drawRect(
-                    color = Color.Gray,
-                    size = Size(segmentWidth, 32.dp.toPx()),
+                    color = borderColor,
+                    size = Size(segmentWidth, segmentHeight),
                     style = Stroke(width = outlineStroke),
                     topLeft = Offset(segmentWidth * i, 0f)
                 )
-            }
-        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Likers",
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "Lovers",
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "Addicted",
-                modifier = Modifier.weight(1f)
-            )
+                // Adiciona o texto correspondente ao quadrado com tamanho de fonte menor
+                val text = when (i) {
+                    0 -> "Likers"
+                    1 -> "Lovers"
+                    2 -> "Addicted"
+                    else -> ""
+                }
+
+                val textColor = if (fillColor != Color(0xFFD9D9D9)) Color.White else Color.Black
+
+                val paint = Paint().apply {
+                    color = textColor.toArgb() // Cor do texto ajustada
+                    textSize = 16.dp.toPx() // Tamanho da fonte ajustado para 16dp
+                }
+
+                // Posiciona o texto no centro do quadrado
+                val textX = (segmentWidth - paint.measureText(text)) / 2 + segmentWidth * i
+                val textY = segmentHeight / 2 + paint.textSize / 2
+                drawContext.canvas.nativeCanvas.drawText(text, textX, textY, paint)
+
+                // Adiciona o texto da faixa
+                val rangeText = when (i) {
+                    0 -> "1-10"
+                    1 -> "11-20"
+                    2 -> "21+"
+                    else -> ""
+                }
+
+                val rangeTextPaint = Paint().apply {
+                    color = textColor.toArgb() // Cor do texto ajustada
+                    textSize = 12.dp.toPx() // Tamanho da fonte ajustado para 12dp
+                }
+
+                // Posiciona o texto da faixa abaixo do texto principal
+                val rangeTextX = (segmentWidth - rangeTextPaint.measureText(rangeText)) / 2 + segmentWidth * i
+                val rangeTextY = segmentHeight / 2 + rangeTextPaint.textSize / 2 + 20.dp.toPx()
+                drawContext.canvas.nativeCanvas.drawText(rangeText, rangeTextX, rangeTextY, rangeTextPaint)
+            }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
