@@ -28,6 +28,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +44,11 @@ import cm.everafter.R
 import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import cm.everafter.classes.Playlist
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,13 +58,27 @@ fun EditPlaylistScreen(
     playlistName: String?,
     modifier: Modifier = Modifier
 ) {
-    // Extract playlist name from arguments
-    val playlistName: String? = navController.currentBackStackEntry?.arguments?.getString("name")
-    // Placeholder data for testing
-    val playlistImage = painterResource(id = R.drawable.ic_launcher_foreground)
-    //val playlistName = "Playlist Name"
-    val locationAndDate = "Location, Date"
+    // Trigger the effect when playlistName changes
+    LaunchedEffect(playlistName) {
+        println("----------------- EditPlaylist Screen -----------------")
 
+        if (playlistName != null) {
+            playlistViewModel.getPlaylist(playlistName)
+        }
+    }
+
+    // Observe changes to the playlistState
+    val playlistState by playlistViewModel.playlistState.collectAsState()
+
+    // Print the playlistState when it changes
+    LaunchedEffect(playlistState) {
+        println("Playlist State: $playlistState")
+    }
+
+    // Use remember to store the result of the effect
+    val playlistDetails = remember(playlistState) {
+        playlistState
+    }
 
     // Content of the screen
     Column(
@@ -97,27 +119,11 @@ fun EditPlaylistScreen(
                     )
                 }
             },
-
         )
 
         // Center only the image, playlist name, location, and date
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
-            // Playlist Image
-            Image(
-                painter = playlistImage,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-
-            // Playlist Name
+        playlistDetails?.let {
+            // Playlist name
             if (playlistName != null) {
                 Text(
                     text = playlistName,
@@ -127,7 +133,8 @@ fun EditPlaylistScreen(
                 )
             }
 
-            // Location and Date
+            // Playlist Location and Date
+            val locationAndDate = "${it.location}, ${it.date}"
             Text(
                 text = locationAndDate,
                 fontSize = 16.sp,
@@ -174,10 +181,18 @@ fun EditPlaylistScreen(
             }
         }
 
-        //TODO: List of Songs
-
+        // Playlist's List of Songs
+        LazyColumn {
+            playlistDetails?.songs?.let { songs ->
+                items(songs) { song ->
+                    SongItem(song = song)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
     }
 }
+
 
 @Composable
 fun SongItem(song: Song) {
