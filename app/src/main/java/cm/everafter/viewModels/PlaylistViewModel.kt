@@ -23,7 +23,6 @@ class PlaylistViewModel : ViewModel() {
     }
 
     // Function to play a song
-// Function to play a song
     fun playSong(song: Song) {
         mediaPlayer?.reset()
         mediaPlayer = MediaPlayer().apply {

@@ -47,11 +47,11 @@ import cm.everafter.viewModels.PlaylistViewModel
 fun EditPlaylistScreen(
     navController: NavController,
     playlistViewModel: PlaylistViewModel,
+    playlistName: String?,
     modifier: Modifier = Modifier
 ) {
     // Extract playlist name from arguments
-    val playlistName: String? = navController.currentBackStackEntry
-        ?.arguments?.getString("playlistName")
+    val playlistName: String? = navController.currentBackStackEntry?.arguments?.getString("name")
     // Placeholder data for testing
     val playlistImage = painterResource(id = R.drawable.ic_launcher_foreground)
     //val playlistName = "Playlist Name"

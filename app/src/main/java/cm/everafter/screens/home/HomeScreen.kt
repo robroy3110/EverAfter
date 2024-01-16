@@ -216,17 +216,32 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                     e.printStackTrace()
                 }
             }
-            otherUserImageBitMap?.let{
-                HomeScreenRelation(
-                    modifier = modifier,
-                    navController = navController,
-                    thisUser = thisUser,
-                    userBitMap = userImageBitMap!!,
-                    userBitMap2 = otherUserImageBitMap!!,
-                    relationShip = relationShip,
-                )
-
+            otherUserImageBitMap?.let {
+                userImageBitMap?.let {
+                    HomeScreenRelation(
+                        modifier = modifier,
+                        navController = navController,
+                        thisUser = thisUser,
+                        userBitMap = userImageBitMap!!,
+                        userBitMap2 = otherUserImageBitMap!!,
+                        relationShip = relationShip,
+                    )
+                } ?: run {
+                    // If userImageBitMap is null, show loading indicator
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Replace this with an Image that loads your loading XML
+                        Image(
+                            painter = painterResource(id = R.drawable.loading_img),
+                            contentDescription = null
+                        )
+                    }
+                }
             }
+
+
 
         }else{
 

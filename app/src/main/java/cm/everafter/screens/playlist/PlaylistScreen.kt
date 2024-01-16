@@ -214,12 +214,11 @@ fun PlayListScreen(
                 PlaylistItem(
                     playlist = playlist,
 
+                    // Inside the PlaylistItem composable
                     onPlaylistClick = { playlist ->
-                        val playlistNameToShowinDetails = playlist.name
-                        println("PLAYLIST NAME SENTTTT "+ playlistNameToShowinDetails)
-                        playlistViewModel.selectPlaylist(playlistNameToShowinDetails)
-                        navController.navigate(Screens.EditPlaylistScreen.route)
+                        navController.navigate("${Screens.EditPlaylistScreen.route}/${playlist.name}")
                     }
+
 
                 )
                 // Add spacing between playlists
@@ -330,14 +329,13 @@ fun Column(modifier: Modifier, content: () -> Unit) {
 }
 
 fun saveEditedPlaylistToFirebase(updatedPlaylist: Any) {
-
+    // TODO: saveEditedPlaylistToFirebase
 }
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun showAddPlaylistDialog(onDismiss: () -> Unit) {
-    // TODO: Implement logic to handle user input and database interactions
     var expanded by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -349,7 +347,7 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = {
             onDismiss.invoke()
-            // TODO: Handle dismissal
+
         },
         title = {
             Text(text = "Add New Playlist")
@@ -397,7 +395,7 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                         .padding(bottom = 8.dp)
                 )
             }
-            // ... (similar UI components for description, date, and location)
+            // TODO: showAddPlaylistDialog add a better location and date picking approach
 
         },
         confirmButton = {
@@ -425,7 +423,7 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
         dismissButton = {
             Button(
                 onClick = {
-                    // TODO: Handle cancel button click
+
                     keyboardController?.hide()
                     onDismiss.invoke()
                 }
@@ -434,7 +432,7 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                 Text(text = "Close")
             }
         },
-        // TODO: Add content for the dialog
+
     )
 }
 
