@@ -49,6 +49,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import cm.everafter.classes.Playlist
+import coil.compose.rememberImagePainter
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +126,7 @@ fun EditPlaylistScreen(
 
         // Center only the image, playlist name, location, and date
         playlistDetails?.let {
+
             // Playlist name
             if (playlistName != null) {
                 Text(
@@ -140,6 +144,23 @@ fun EditPlaylistScreen(
                 fontSize = 16.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+            // TODO: load playlist image from storage and show on screen
+
+            // Load and display the playlist image from Firebase Storage
+/*            it.imageUri?.let { imageUri ->
+                val storageReference = Firebase.storage.getReference(imageUri)
+                val painter = rememberImagePainter(storageReference)
+                Image(
+                    painter = painter,
+                    contentDescription = "Playlist Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                )
+            }
+            */
+
         }
 
         // Smooth Divider

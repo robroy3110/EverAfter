@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -154,3 +155,15 @@ fun SongItem(song: Song, onItemClick: (Song) -> Unit) {
     }
 }
 
+@Composable
+fun AddToPlaylistButton(selectedSongs: List<Song>, onAddToPlaylist: () -> Unit) {
+    // Button to add selected songs to the playlist
+    Button(
+        onClick = { onAddToPlaylist() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+    ) {
+        Text(text = "Add to Playlist")
+    }
+}

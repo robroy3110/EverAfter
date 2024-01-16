@@ -41,10 +41,10 @@ class PlaylistViewModel : ViewModel() {
                         // Iterate through the dataSnapshot to get the playlist
                         for (playlistSnapshot in snapshot.children) {
                             val playlist = playlistSnapshot.getValue(Playlist::class.java)
-                            println(playlist)
+                            //println(playlist)
 
                             playlist?.let {
-                                println(it.description)
+                                //println(it.description)
                                 _playlistState.value = it
 
                             }
@@ -112,5 +112,48 @@ class PlaylistViewModel : ViewModel() {
         mediaPlayer?.release()
         mediaPlayer = null
         super.onCleared()
+    }
+
+
+    // Function to add songs to the playlist
+    fun addSongsToPlaylist(songs: List<Song>) {
+        // Ensure that there's a selected playlist
+        val playlistName = selectedPlaylistName
+        if (playlistName.isEmpty()) {
+            return
+        }
+
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        // Query to get the playlist with the specified name
+        val query = playlistsRef.orderByChild("name").equalTo(playlistName)
+
+        // Fetch data from Firebase using the query
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // Iterate through the dataSnapshot to get the playlist
+                    for (playlistSnapshot in snapshot.children) {
+                        val playlist = playlistSnapshot.getValue(Playlist::class.java)
+
+                        playlist?.let {
+                            // Update the playlist by adding new songs
+                            val updatedSongs = (it.songs ?: emptyList()) + songs
+                            playlistsRef.child(playlistSnapshot.key ?: "").child("songs").setValue(updatedSongs)
+                            _playlistState.value = it.copy(songs = updatedSongs)
+                        }
+
+                        // Assuming there's only one playlist with the given name
+                        break
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error
+                println("Couldn't get the Playlist from Firebase for some reason...")
+            }
+        })
     }
 }
