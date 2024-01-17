@@ -32,7 +32,7 @@ fun initializeSongs() {
 
     val song14 = createSong("Since I Don't Have You", "The Skyliners", "Since I Don't Have You", "", "gs://everafter-382e1.appspot.com/Songs/The_Skyliners_-_Since_I_Dont_Have_You.mp3", "gs://everafter-382e1.appspot.com/SongsPics/the_skyliners.jpg")
 
-    val song1 = createSong("Valerie", "Amy Winehouse", "Back To Black", "", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3","gs://everafter-382e1.appspot.com/SongsPics/the_skyliners.jpg")
+    val song1 = createSong("Valerie", "Amy Winehouse", "Back To Black", "", "gs://everafter-382e1.appspot.com/Songs/Amy_Winehouse_-_Valerie.mp3","gs://everafter-382e1.appspot.com/SongsPics/Capa_de_Back_to_Black.jpg")
 
     val song8 = createSong("Undisclosed Desires", "Muse", "The Resistance", "", "gs://everafter-382e1.appspot.com/Songs/Muse_-_Undisclosed_Desires.mp3","gs://everafter-382e1.appspot.com/SongsPics/muse.jpg")
 

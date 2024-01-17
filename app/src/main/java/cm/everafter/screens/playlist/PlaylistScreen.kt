@@ -84,6 +84,7 @@ fun PlayListScreen(
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     var showDialog by remember { mutableStateOf(false) }
 
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -189,7 +190,7 @@ fun PlayListScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        /* ------------                          ------------------------- PLAYLISTS OF DB ------------------------------------- */
+        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
         // Playlist from the database
         // Retrieve playlists from the database
         DisposableEffect(Unit) {
@@ -437,15 +438,27 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
 }
 
 private fun savePlaylistToFirebase(playlist: Playlist) {
-    val database =Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+    val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
 
     // Generate a unique key for the playlist
     val playlistKey = playlistsRef.push().key ?: return
 
+    // Create a map to store the values to be saved
+    val playlistValues = mapOf(
+        "relationship" to playlist.relationship,
+        "name" to playlist.name,
+        "description" to playlist.description,
+        "date" to playlist.date,
+        "location" to playlist.location,
+        "imageUri" to playlist.imageUri,
+        "songs" to playlist.songs
+    )
+
     // Save the playlist to the Firebase Realtime Database
-    playlistsRef.child(playlistKey).setValue(playlist)
+    playlistsRef.child(playlistKey).setValue(playlistValues)
 }
+
 
 private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")

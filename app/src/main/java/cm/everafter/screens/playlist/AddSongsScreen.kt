@@ -1,27 +1,23 @@
 package cm.everafter.screens.playlist
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,18 +26,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import cm.everafter.R
 import cm.everafter.classes.Song
-import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
 import coil.compose.rememberImagePainter
 import com.google.firebase.Firebase
@@ -64,13 +62,19 @@ fun AddSongsScreen(
         availableSongs.value = songs
     }
 
+    // Currently playing song
+    var currentlyPlayingSong by remember { mutableStateOf<Song?>(null) }
+
+    // State to keep track of selected item index
+    var selectedItemIndex by remember { mutableStateOf(-1) }
+
     // Content of the screen
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // AppBar with back and edit buttons
+        // TopBar with back and edit buttons
         TopAppBar(
             title = { /* You can add a title here if needed */ },
             navigationIcon = {
@@ -89,12 +93,27 @@ fun AddSongsScreen(
             },
         )
         // Display the list of available songs
-        LazyColumn {
-            items(availableSongs.value) { song ->
-                SongItem(song = song, onItemClick = {
-                    // Handle song item click
-                    playlistViewModel.playSong(song)
-                })
+        LazyColumn(state = rememberLazyListState()) {
+            itemsIndexed(availableSongs.value) { index, song ->
+                SongItem(
+                    song = song,
+                    onItemClick = {
+                        // Handle item click and update the selected item index
+                        selectedItemIndex = index
+                    },
+                    isPlaying = currentlyPlayingSong == song,
+                    onPlayClick = {
+                        // Start playing the song
+                        playlistViewModel.playSong(song)
+                        currentlyPlayingSong = song
+                    },
+                    onStopClick = {
+                        // Stop playing the song
+                        playlistViewModel.stopPlayback()
+                        currentlyPlayingSong = null
+                    },
+                    isClicked = index == selectedItemIndex
+                )
                 Divider(
                     color = MaterialTheme.colorScheme.primary,
                     thickness = 1.dp,
@@ -104,6 +123,8 @@ fun AddSongsScreen(
         }
     }
 }
+
+
 
 fun getAvailableSongs(onSongsLoaded: (List<Song>) -> Unit) {
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -133,37 +154,80 @@ fun getAvailableSongs(onSongsLoaded: (List<Song>) -> Unit) {
         }
     })
 }
+
 @Composable
-fun SongItem(song: Song, onItemClick: (Song) -> Unit) {
+fun SongItem(
+    song: Song,
+    onItemClick: (Song) -> Unit,
+    isPlaying: Boolean,
+    onPlayClick: () -> Unit,
+    onStopClick: () -> Unit,
+    isClicked: Boolean
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onItemClick.invoke(song) }, // Pass the clicked song to onItemClick
+            .clickable { onItemClick.invoke(song) },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Load and display the image
-        Image(
-            painter = rememberImagePainter(data = song.imageUrl),
-            contentDescription = "Song Image",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
+        // Check if imageUrl is not null or blank
+        if (!song.imageUrl.isNullOrBlank()) {
+            // Load and display the image
+            Image(
+                painter = rememberImagePainter(data = song.imageUrl),
+                contentDescription = "Song Image",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+        } else {
+            // Display a default image if imageUrl is null or blank
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground), // Replace with your default image resource
+                contentDescription = "Default Image",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+        }
+
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = song.name, fontSize = 16.sp)
+
+        // Play Icon (conditionally displayed)
+        if (isClicked) {
+            IconButton(
+                onClick = { onPlayClick() },
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play",
+                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
+                )
+            }
+        }
+
+        // Stop Icon (conditionally displayed)
+        if (isClicked) {
+            IconButton(
+                onClick = { onStopClick() },
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = "Stop",
+                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
+                )
+            }
+        }
     }
 }
 
-@Composable
-fun AddToPlaylistButton(selectedSongs: List<Song>, onAddToPlaylist: () -> Unit) {
-    // Button to add selected songs to the playlist
-    Button(
-        onClick = { onAddToPlaylist() },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp)
-    ) {
-        Text(text = "Add to Playlist")
-    }
-}
+
+

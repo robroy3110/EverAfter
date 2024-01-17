@@ -206,7 +206,7 @@ fun EditPlaylistScreen(
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
                 items(songs) { song ->
-                    SongItem(song = song)
+                    SongItemOnEditScreen(song = song)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -216,7 +216,7 @@ fun EditPlaylistScreen(
 
 
 @Composable
-fun SongItem(song: Song) {
+fun SongItemOnEditScreen(song: Song) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,3 +228,4 @@ fun SongItem(song: Song) {
         Text(text = song.name, fontSize = 16.sp)
     }
 }
+
