@@ -60,6 +60,7 @@ import cm.everafter.classes.Playlist
 import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
+import cm.everafter.viewModels.UserViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -71,7 +72,8 @@ import com.google.firebase.storage.storage
 @Composable
 fun PlayListScreen(
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userViewModel: UserViewModel
 ) {
     // Inside your composable function
     val playlistViewModel: PlaylistViewModel = viewModel()
@@ -83,7 +85,6 @@ fun PlayListScreen(
     // State to hold playlists from the database
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     var showDialog by remember { mutableStateOf(false) }
-
 
     Column(
         modifier = modifier
@@ -152,7 +153,7 @@ fun PlayListScreen(
             }
             // Show the dialog when showDialog is true
             if (showDialog) {
-                showAddPlaylistDialog(onDismiss = { showDialog = false })
+                showAddPlaylistDialog(userViewModel = userViewModel, onDismiss = { showDialog = false })
             }
         }
 
@@ -190,7 +191,7 @@ fun PlayListScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
+        /* ------------                          ------------------------- PLAYLISTS OF DB ------------------------------------- */
         // Playlist from the database
         // Retrieve playlists from the database
         DisposableEffect(Unit) {
@@ -304,7 +305,7 @@ fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, on
                 // Add more details as needed
             }
         },
-
+        // TODO: implement Save Playlist Edit button
         confirmButton = {
             /*
             Button(
@@ -329,14 +330,16 @@ fun Column(modifier: Modifier, content: () -> Unit) {
 
 }
 
+/*
 fun saveEditedPlaylistToFirebase(updatedPlaylist: Any) {
     // TODO: saveEditedPlaylistToFirebase
 }
+*/
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun showAddPlaylistDialog(onDismiss: () -> Unit) {
+fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -359,9 +362,6 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .padding(16.dp) // Adjusted padding as needed
             ) {
-
-
-
                 // UI for playlistName, description, date, and location
                 OutlinedTextField(
                     value = playlistName,
@@ -397,19 +397,21 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                 )
             }
             // TODO: showAddPlaylistDialog add a better location and date picking approach
-
         },
         confirmButton = {
             Button(
                 onClick = {
-                    // Save the playlist to Firebase
+                    // Save the playlist to Firebase with the relationship from UserViewModel
                     val playlist = Playlist(
+                        relationship = userViewModel.loggedInUser?.relationship ?: "",
                         name = playlistName,
                         description = description,
                         date = date,
-                        location = location
+                        location = location,
+                        imageUri = "",
+                        songs = emptyList()
                     )
-                    println("SAVED PLAYLIST SUPOSTAMENTE")
+
                     savePlaylistToFirebase(playlist)
 
                     // Hide the keyboard and dismiss the dialog
@@ -424,7 +426,6 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
         dismissButton = {
             Button(
                 onClick = {
-
                     keyboardController?.hide()
                     onDismiss.invoke()
                 }
@@ -433,33 +434,22 @@ fun showAddPlaylistDialog(onDismiss: () -> Unit) {
                 Text(text = "Close")
             }
         },
-
     )
 }
 
+
 private fun savePlaylistToFirebase(playlist: Playlist) {
-    val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+    val database =Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
 
     // Generate a unique key for the playlist
     val playlistKey = playlistsRef.push().key ?: return
 
-    // Create a map to store the values to be saved
-    val playlistValues = mapOf(
-        "relationship" to playlist.relationship,
-        "name" to playlist.name,
-        "description" to playlist.description,
-        "date" to playlist.date,
-        "location" to playlist.location,
-        "imageUri" to playlist.imageUri,
-        "songs" to playlist.songs
-    )
-
     // Save the playlist to the Firebase Realtime Database
-    playlistsRef.child(playlistKey).setValue(playlistValues)
+    playlistsRef.child(playlistKey).setValue(playlist)
 }
 
-
+/*
 private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
@@ -485,4 +475,4 @@ private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
             // Handle the error if the query is canceled
         }
     })
-}
+}*/

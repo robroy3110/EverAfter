@@ -44,7 +44,7 @@ fun AppNavigation(navController: NavHostController) {
             GamesScreen(navController = navController)
         }
         composable(route = Screens.PlaylistScreen.route){
-            PlayListScreen(navController = navController)
+            PlayListScreen(navController = navController, userViewModel = userViewModel)
         }
         composable(route = "${Screens.EditPlaylistScreen.route}/{name}") { backStackEntry ->
             val playlistName = backStackEntry.arguments?.getString("name")
