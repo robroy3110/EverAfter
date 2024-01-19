@@ -1,4 +1,5 @@
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +48,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -66,7 +69,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +86,10 @@ fun PlayListScreen(
     // Initialize Firebase Database
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
     val playlistsRef = database.getReference("Playlists")
+
+    // Initialize Firebase Storage
+    val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
+    val storageRef = storage.reference
 
     // State to hold playlists from the database
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
@@ -160,7 +169,7 @@ fun PlayListScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        /* ------------------------------------- PLAYLISTS  ------------------------------------- */
+        /* ------------------------------------- ADDING PLAYLISTS  ------------------------------------- */
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,15 +200,16 @@ fun PlayListScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        /* ------------                          ------------------------- PLAYLISTS OF DB ------------------------------------- */
-        // Playlist from the database
-        // Retrieve playlists from the database
+        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
+// Retrieve playlists from the database
         DisposableEffect(Unit) {
             val playlistsListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val newPlaylists = snapshot.children.mapNotNull { it.getValue(Playlist::class.java) }
+                        .filter { it.relationship == userViewModel.loggedInUser?.relationship }
                     playlists = newPlaylists
                 }
+
                 override fun onCancelled(error: DatabaseError) {}
             }
 
@@ -209,29 +219,57 @@ fun PlayListScreen(
                 playlistsRef.removeEventListener(playlistsListener)
             }
         }
-        // Display playlists
+// Display playlists
         LazyColumn {
             items(playlists) { playlist ->
                 // Display regular playlist item
                 PlaylistItem(
                     playlist = playlist,
-
-                    // Inside the PlaylistItem composable
+                    storageRef = storageRef,  // Pass the storage reference
                     onPlaylistClick = { playlist ->
                         navController.navigate("${Screens.EditPlaylistScreen.route}/${playlist.name}")
                     }
-
-
                 )
                 // Add spacing between playlists
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
     }
 }
 
 @Composable
-fun PlaylistItem(playlist: Playlist, onPlaylistClick: (Playlist) -> Unit) {
+fun PlaylistImage(playlist: Playlist, storageRef: StorageReference) {
+    // Display playlist image if available
+    val megabytes: Long = 1024 * 1024
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(playlist) {
+        try {
+            val byteArray = storageRef.child("PlaylistsPics/${playlist.imageUri}")
+                .getBytes(megabytes)
+                .await()
+            imageBitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+        } catch (e: Exception) {
+            // Handle failure
+            e.printStackTrace()
+        }
+    }
+
+    // Display the loaded image
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap!!.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(MaterialTheme.shapes.medium)
+        )
+    }
+}
+
+@Composable
+fun PlaylistItem(playlist: Playlist, storageRef: StorageReference, onPlaylistClick: (Playlist) -> Unit) {
     Row(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
@@ -243,15 +281,7 @@ fun PlaylistItem(playlist: Playlist, onPlaylistClick: (Playlist) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Display playlist image if available
-        if (playlist.imageUri != null) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(MaterialTheme.shapes.medium)
-            )
-        }
+        PlaylistImage(playlist = playlist, storageRef = storageRef)
 
         // Display playlist name and edit button
         Row(
@@ -269,7 +299,6 @@ fun PlaylistItem(playlist: Playlist, onPlaylistClick: (Playlist) -> Unit) {
         }
     }
 }
-
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)

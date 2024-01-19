@@ -6,7 +6,7 @@ class Song(
     val album: String = "",
     val uri: String = "",
     val storagePath: String = "", // assuming you have a storage path field
-    val imageUrl: String = "" // add a field for image URL
+    val imageFileName: String = "" // add a field for image URL
 ) {
     // Empty constructor required by Firebase
     constructor() : this("", "", "", "", "", "")

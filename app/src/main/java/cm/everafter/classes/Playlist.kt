@@ -22,15 +22,3 @@ class Playlist(
         return Playlist(relationship, name, description, date, location, imageUri, songs ?: emptyList())
     }
 }
-/*
-
-Playlist instance actually should have:
-- Relationship;
-- Name
-- Description
-- Date
-- Location (use default current location, maybe using the google API);
-- Image
-- List Of Songs added by the user, from spotify api
-
- */

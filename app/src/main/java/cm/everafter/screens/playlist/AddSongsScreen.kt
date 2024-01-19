@@ -172,10 +172,10 @@ fun SongItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Check if imageUrl is not null or blank
-        if (!song.imageUrl.isNullOrBlank()) {
+        if (!song.imageFileName.isNullOrBlank()) {
             // Load and display the image
             Image(
-                painter = rememberImagePainter(data = song.imageUrl),
+                painter = rememberImagePainter(data = song.imageFileName),
                 contentDescription = "Song Image",
                 modifier = Modifier
                     .size(40.dp)

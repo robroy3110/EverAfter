@@ -146,20 +146,7 @@ fun EditPlaylistScreen(
             )
             // TODO: load playlist image from storage and show on screen
 
-            // Load and display the playlist image from Firebase Storage
-/*            it.imageUri?.let { imageUri ->
-                val storageReference = Firebase.storage.getReference(imageUri)
-                val painter = rememberImagePainter(storageReference)
-                Image(
-                    painter = painter,
-                    contentDescription = "Playlist Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                )
-            }
-            */
+
 
         }
 
