@@ -1,5 +1,7 @@
 package cm.everafter.screens.playlist
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +51,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.storage
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +62,10 @@ fun AddSongsScreen(
     playlistViewModel: PlaylistViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Initialize Firebase Storage
+    val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
+    val storageRef = storage.reference
+
     // Fetch the list of songs from the repository
     val availableSongs = remember { mutableStateOf<List<Song>>(emptyList()) }
 
@@ -96,6 +107,7 @@ fun AddSongsScreen(
         LazyColumn(state = rememberLazyListState()) {
             itemsIndexed(availableSongs.value) { index, song ->
                 SongItem(
+                    storageRef = storageRef,
                     song = song,
                     onItemClick = {
                         // Handle item click and update the selected item index
@@ -123,8 +135,6 @@ fun AddSongsScreen(
         }
     }
 }
-
-
 
 fun getAvailableSongs(onSongsLoaded: (List<Song>) -> Unit) {
     val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -154,9 +164,48 @@ fun getAvailableSongs(onSongsLoaded: (List<Song>) -> Unit) {
         }
     })
 }
+@Composable
+fun SongImage(song: Song, storageRef: StorageReference) {
+    // Display song image if available
+    val megabytes: Long = 1024 * 1024
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(song) {
+        try {
+            val byteArray = storageRef.child("SongsPics/${song.imageFileName}")
+                .getBytes(megabytes)
+                .await()
+            imageBitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+        } catch (e: Exception) {
+            // Handle failure
+            e.printStackTrace()
+        }
+    }
+
+    // Display the loaded image
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap!!.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(50.dp)
+                .clip(MaterialTheme.shapes.medium)
+        )
+    } else {
+        // Display a default image if imageUrl is null or blank
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground), // Replace with your default image resource
+            contentDescription = "Default Image",
+            modifier = Modifier
+                .size(50.dp)
+                .clip(MaterialTheme.shapes.medium)
+        )
+    }
+}
 
 @Composable
 fun SongItem(
+    storageRef: StorageReference,
     song: Song,
     onItemClick: (Song) -> Unit,
     isPlaying: Boolean,
@@ -171,29 +220,25 @@ fun SongItem(
             .clickable { onItemClick.invoke(song) },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Check if imageUrl is not null or blank
-        if (!song.imageFileName.isNullOrBlank()) {
-            // Load and display the image
-            Image(
-                painter = rememberImagePainter(data = song.imageFileName),
-                contentDescription = "Song Image",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-            )
-        } else {
-            // Display a default image if imageUrl is null or blank
-            Image(
-                painter = painterResource(R.drawable.ic_launcher_foreground), // Replace with your default image resource
-                contentDescription = "Default Image",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-            )
-        }
+
+        // Display song image
+        SongImage(song = song, storageRef = storageRef)
 
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = song.name, fontSize = 16.sp)
+
+        // Column for song name and artist
+        Column {
+            // Song name
+            Text(text = song.name, fontSize = 16.sp)
+
+            // Song artist
+            Text(
+                text = song.artist,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
 
         // Play Icon (conditionally displayed)
         if (isClicked) {
@@ -210,7 +255,6 @@ fun SongItem(
                 )
             }
         }
-
         // Stop Icon (conditionally displayed)
         if (isClicked) {
             IconButton(
@@ -228,6 +272,3 @@ fun SongItem(
         }
     }
 }
-
-
-

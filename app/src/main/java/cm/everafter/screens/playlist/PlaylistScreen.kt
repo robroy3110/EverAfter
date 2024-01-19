@@ -219,7 +219,7 @@ fun PlayListScreen(
                 playlistsRef.removeEventListener(playlistsListener)
             }
         }
-// Display playlists
+        // Display playlists
         LazyColumn {
             items(playlists) { playlist ->
                 // Display regular playlist item
@@ -227,14 +227,13 @@ fun PlayListScreen(
                     playlist = playlist,
                     storageRef = storageRef,  // Pass the storage reference
                     onPlaylistClick = { playlist ->
-                        navController.navigate("${Screens.EditPlaylistScreen.route}/${playlist.name}")
+                        navController.navigate("${Screens.PlaylistDetailsScreen.route}/${playlist.name}")
                     }
                 )
                 // Add spacing between playlists
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
-
     }
 }
 
@@ -380,16 +379,20 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = {
             onDismiss.invoke()
-
         },
         title = {
-            Text(text = "Add New Playlist")
+            Text(
+                text = "Add New Playlist",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp) // Center text
+            )
         },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp) // Adjusted padding as needed
+                    .padding(16.dp)
             ) {
                 // UI for playlistName, description, date, and location
                 OutlinedTextField(
@@ -457,7 +460,7 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
                 onClick = {
                     keyboardController?.hide()
                     onDismiss.invoke()
-                }
+                },
             ) {
                 Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
                 Text(text = "Close")
