@@ -76,6 +76,7 @@ dependencies {
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.test:monitor:1.6.1")
     implementation("com.google.firebase:firebase-firestore:24.10.0")
+    implementation("androidx.test.ext:junit-ktx:1.1.5")
     androidTestImplementation("junit:junit:4.12")
 
     debugImplementation ("androidx.compose.ui:ui-tooling")

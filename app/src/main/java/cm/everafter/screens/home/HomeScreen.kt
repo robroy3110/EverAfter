@@ -133,8 +133,25 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         val listener = object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
-                val updatedUser = snapshot.getValue(Perfil::class.java)
-                user = updatedUser
+                val data = snapshot.value
+
+                // Check if the data is a HashMap
+                if (data is Map<*, *>) {
+
+                    // Map the data to your Perfil class fields
+                    val updatedUser = Perfil(
+                        name = data["name"] as? String ?: "",
+                        image = data["image"] as? String ?: "",
+                        relationship = data["relationship"] as? String ?: "",
+                        username = data["username"] as? String ?: "",
+                        notifications = (data["notifications"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    )
+                    user = updatedUser
+                } else {
+                    // If it's not a HashMap, try to directly cast to Perfil
+                    val updatedUser = snapshot.getValue(Perfil::class.java)
+                    user = updatedUser
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -148,6 +165,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             userRef.removeEventListener(listener)
         }
     }
+
 
 
     user?.let { thisUser ->
