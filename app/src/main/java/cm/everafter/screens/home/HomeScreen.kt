@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -75,7 +76,9 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -83,6 +86,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.colorResource
+import java.util.stream.IntStream.range
 
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -97,7 +101,6 @@ fun HomeScreen(
     viewModel: UserViewModel,
     modifier: Modifier = Modifier
 ) {
-
     if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
@@ -115,7 +118,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
     var user by remember { mutableStateOf<Perfil?>(null) }
     var userImageBitMap by remember { mutableStateOf<Bitmap?>(null) }
-
+    val notificationsUsers by remember { mutableStateOf<MutableList<Perfil?>>(mutableListOf())}
     var otherUser by remember { mutableStateOf<Perfil?>(null) }
     var otherUserImageBitMap by remember { mutableStateOf<Bitmap?>(null)}
 
@@ -125,6 +128,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
     LaunchedEffect(Unit) {
         val data = getUserDataFromFirebase()
         user = data
+
     }
 
     DisposableEffect(user?.relationship) {
@@ -245,8 +249,38 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
         }else{
 
+            if (thisUser.notifications.isNotEmpty()) {
+                LaunchedEffect(Unit) {
+                        for (i in thisUser.notifications) {
+                            val referenceUser = db.reference.child("Users").child(i.value).get().await()
+                            if (referenceUser.exists()) {
+                                val notifUser = referenceUser.getValue(Perfil::class.java)
+                                notificationsUsers.add(notifUser)
+                            }
+                        }
+                }
+            }
+
             userImageBitMap?.let {
-                HomeScreenNoRelation(modifier = modifier, navController =navController , thisUser = thisUser, userBitMap =userImageBitMap!! )
+                HomeScreenNoRelation(
+                    modifier = modifier,
+                    navController = navController,
+                    thisUser = thisUser,
+                    userBitMap = userImageBitMap!!,
+                    notificationsUsers = notificationsUsers.toList()
+                )
+            } ?: run {
+                // Mostra o indicador de carregamento enquanto espera
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.loading_img),
+                        contentDescription = null
+                    )
+                }
+            }
             }
 
 
@@ -254,9 +288,6 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         }
         // Adjusted spacing between rows
     }
-
-}
-
 
 @Composable
 fun LoadingScreen(modifier: Modifier) {
@@ -278,7 +309,7 @@ fun HomeScreenRelation(
     userBitMap2: Bitmap,
     relationShip: RelationShip?
 ) {
-
+    var showDialogNotifications by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
@@ -306,7 +337,7 @@ fun HomeScreenRelation(
 
                     Button(
                         onClick = {
-                            navController.navigate(Screens.ProfileScreen.route)
+                            showDialogNotifications = true
                         },
                         modifier = Modifier
                             .wrapContentSize()
@@ -316,7 +347,7 @@ fun HomeScreenRelation(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "Profile",
+                            contentDescription = "Notifications",
                             tint = Color.Magenta, // Black icon color
                             modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                         )
@@ -375,6 +406,31 @@ fun HomeScreenRelation(
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary),
                         contentScale = ContentScale.Crop,
+                    )
+                }
+                if(showDialogNotifications){
+                    Dialog(
+                        onDismissRequest = { showDialogNotifications = false },
+                        content = {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(375.dp)
+                                    .padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                            ){
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    for (i in range(0,10)){
+                                        Text("Teste $i")
+                                    }
+                                }
+                            }
+                        }
                     )
                 }
             }
@@ -546,12 +602,14 @@ fun RelationshipProgressBar(points: Int) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap) {
+fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap,notificationsUsers: List<Perfil?>) {
     var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var showDialogUser by remember { mutableStateOf(false) }
     var showDialogError by remember { mutableStateOf(false) }
     var showDialogUserInRelationship by remember { mutableStateOf(false) }
+    var showDialogNotificationSent by remember { mutableStateOf(false)}
+    var showDialogNotifications by remember { mutableStateOf(false)}
     val username = remember { mutableStateOf(TextFieldValue()) }
 
     Column(
@@ -566,7 +624,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 .fillMaxWidth()
                 .padding(bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
             Text(
                 text = "This Is Us",
@@ -591,8 +649,45 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                     modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                 )
             }
-            Text(text = thisUser.name)
-            Text(text = thisUser.username, color = Color.Black)
+
+            //-------------------Still not beautiful mas mostra quantas notifs ele tem ------------------------
+            // Honestly i give up tryna make it beautiful i miss flutter
+            Button(
+                onClick = {
+                    showDialogNotifications = true
+                },
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(start = 8.dp)
+                    .background(Color.Transparent)
+                    .clip(CircleShape) // Garante que o botão seja circular
+            ) {
+                Box{
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color.Black,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    if (notificationsUsers.isNotEmpty()) {
+                        // Adiciona um círculo vermelho com o número
+                        Box(
+                            modifier = Modifier
+                                .background(Color.Red)
+                                .padding(2.dp) // Ajuste para controlar a distância do círculo até o ícone
+                                .clip(CircleShape)
+                                .align(Alignment.TopEnd)
+                        ) {
+                            Text(
+                                text = notificationsUsers.size.toString(),
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(4.dp)
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Divider line
@@ -740,9 +835,13 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                     modifier = Modifier.fillMaxWidth(),
                                     onClick = {
 
-                                        if(it.first.relationship == "" && thisUser.relationship == ""){
+                                        if(it.first.relationship == "" && thisUser.relationship == "") {
 
-                                            val newRelationShip = db.reference.child("Relationships").push()
+                                            db.reference.child("Users").child(it.second.trim()).child("notifications").child(thisUser.username).setValue(auth.currentUser!!.uid)
+
+                                            showDialogNotificationSent = showDialogNotificationSent.not()
+                                            showDialogUser = showDialogUser.not()
+                                           /* val newRelationShip = db.reference.child("Relationships").push()
 
                                             val relationShipKey = newRelationShip.key
 
@@ -751,7 +850,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                             )
 
                                             db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(relationShipKey)
-                                            db.reference.child("Users").child(it.second.trim()).child("relationship").setValue(relationShipKey)
+                                            db.reference.child("Users").child(it.second.trim()).child("relationship").setValue(relationShipKey)*/
 
                                         }else{
                                             showDialogUserInRelationship = showDialogUserInRelationship.not()
@@ -849,6 +948,118 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 }
             )
         }
+        if(showDialogNotificationSent){
+            Dialog(
+                onDismissRequest = { showDialogNotificationSent = false },
+                content = {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(375.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+
+                            Text(
+                                text = "A request has been sent to the user.",
+                                modifier = Modifier.padding(16.dp),
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    showDialogNotificationSent = showDialogNotificationSent.not()
+                                }
+                            ) {
+                                Text(text = "Ok")
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        if(showDialogNotifications){
+
+            Dialog(
+                onDismissRequest = { showDialogNotifications = false },
+                content = {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(375.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            for (i in notificationsUsers){
+                                Card{
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        shape = MaterialTheme.shapes.medium
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(16.dp)
+                                        ) {
+                                            // Imagem do perfil
+                                            Image(
+                                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(64.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.primary)
+                                            )
+
+                                            // Espaçamento entre a imagem e o texto
+                                            Spacer(modifier = Modifier.width(16.dp))
+
+                                            // Informações do usuário
+                                            Column {
+                                                Text(
+                                                    text = i!!.name,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+
+                                                Text(
+                                                    text = i.username,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            // Espaçamento entre o texto e o botão
+                                            Spacer(modifier = Modifier.weight(1f))
+
+                                            // Botão de checkmark
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Check",
+                                                tint = MaterialTheme.colorScheme.secondary,
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -873,6 +1084,8 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
         // ... Rest of your content
     }
 }
+
+
 suspend fun getUserDataFromFirebase(): Perfil? {
     return try {
         val snapshot = db.reference.child("Users").child(auth.currentUser!!.uid).get().await()
