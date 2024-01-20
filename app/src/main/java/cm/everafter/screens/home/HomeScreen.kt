@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.util.Log
+import android.widget.CalendarView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -84,7 +85,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.viewinterop.AndroidView
 import cm.everafter.classes.User
+import cm.everafter.screens.memories.getMonthByNumber
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import java.util.stream.IntStream.range
 
 
@@ -151,7 +157,31 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             userRef.removeEventListener(listener)
         }
     }
+    if(user != null){
+        DisposableEffect(relationShip?.date) {
+            // Observe changes in the relationship property of the user
+            val relationRef = db.reference.child("Relationships").child(user!!.relationship)
+            val listener = object : ValueEventListener {
 
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                    relationShip = updatedRelation
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error observing user data: ${error.message}")
+                }
+            }
+
+            val userRef = db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(user!!.relationship)
+
+            relationRef.addValueEventListener(listener)
+            // Remove the listener when the composable is disposed
+            onDispose {
+                relationRef.removeEventListener(listener)
+            }
+        }
+    }
 
     user?.let { thisUser ->
 
@@ -316,6 +346,9 @@ fun HomeScreenRelation(
     relationShip: RelationShip?
 ) {
     var showDialogNotifications by remember { mutableStateOf(false) }
+    var showDialogChangeDate by remember { mutableStateOf(false) }
+    var showDialogErrorDate by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
@@ -354,7 +387,7 @@ fun HomeScreenRelation(
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notifications",
-                            tint = Color.Magenta, // Black icon color
+                            tint = Color.Black, // Black icon color
                             modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                         )
                     }
@@ -437,13 +470,101 @@ fun HomeScreenRelation(
                         }
                     )
                 }
+                if(showDialogChangeDate){
+                    Dialog(onDismissRequest = {showDialogChangeDate = false},
+                        content= {
+                            var date by remember {
+                                mutableStateOf("")
+                            }
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(450.dp)
+                                    .padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxSize()
+
+                                ) {
+                                    AndroidView(factory = { CalendarView(it) },
+                                        update = {
+                                            it.setOnDateChangeListener { calendarView, year, month, day ->
+                                                date = "$day-${month + 1}-$year"
+                                                if (!isDateValid(date)) {
+                                                   showDialogChangeDate = false
+                                                    showDialogErrorDate = true
+                                                }
+                                            }
+                                        })
+                                    Text(text = date)
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth().padding(
+                                            start = 24.dp,
+                                            top = 0.dp,
+                                            end = 24.dp,
+                                            bottom = 24.dp
+                                        ),
+                                        onClick = {
+
+                                            db.reference.child("Relationships")
+                                                .child(thisUser.relationship).child("date")
+                                                .setValue(
+                                                    date
+                                                )
+                                            showDialogChangeDate = false
+                                        }
+                                    ) {
+                                        Text(text = "Change Date")
+                                    }
+                                }
+                            }
+                        })
+                }
+                if(showDialogErrorDate){
+                    Dialog(onDismissRequest = {showDialogErrorDate = false},
+                        content= {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxSize()
+
+                                ) {
+                                    Text(text = "You can't choose a future date")
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth().padding(
+                                            start = 24.dp,
+                                            top = 24.dp,
+                                            end = 24.dp,
+                                            bottom = 24.dp
+                                        ),
+                                        onClick = {
+                                            showDialogErrorDate = false
+                                            showDialogChangeDate = true
+                                        }
+                                    ) {
+                                        Text(text = "Ok I'm sorry")
+                                    }
+                                }
+                            }
+                        })
+                }
             }
 
             item {
                 Text(
                     text = relationShip!!.date,
                     modifier = Modifier
-                        .padding(top = 8.dp) // Adjusted padding as needed
+                        .padding(top = 8.dp,start= 150.dp).clickable { showDialogChangeDate = true } // Adjusted padding as needed
                 )
             }
 
@@ -456,13 +577,19 @@ fun HomeScreenRelation(
                             color = Color(0xFFD9D9D9), // Color D9D9D9
                             shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
                         )
+                        .clickable { showDialogChangeDate = true }
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    if(relationShip!!.date == "0-0-0"){
                     Text(
-                        text = "How long they are together",
-                        modifier = Modifier.wrapContentSize()
-                    )
+                        text = "Tap here to set the day you started dating!",
+                        modifier = Modifier.wrapContentSize())
+                    }else{
+                        Text(
+                            text = "You have been together for ${calcularDiferencaDias(relationShip.date,SimpleDateFormat("dd-MM-yyyy").format(Date()))} days",
+                            modifier = Modifier.wrapContentSize())
+                    }
                 }
             }
 
@@ -1080,7 +1207,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                                                     0,
                                                                     0,
                                                                     0,
-                                                                    "Today idk",
+                                                                    "0-0-0",
                                                                     auth.currentUser!!.uid,
                                                                     i.id
                                                                 )
@@ -1211,60 +1338,41 @@ suspend fun searchUserDataFromFirebase(username:String): User? {
 }
 
 
+fun calcularDiferencaDias(data1: String, data2: String): Long {
+    // Formato da data
+    val formato = SimpleDateFormat("dd-MM-yyyy")
 
+    try {
+        // Parse das datas para objetos Date
+        val dataInicio = formato.parse(data1)
+        val dataFim = formato.parse(data2)
 
-@Composable
-fun DialogWithImage(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    painter: Painter,
-    imageDescription: String,
-) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        // Draw a rectangle shape with rounded corners inside the dialog
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(375.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Image(
-                    painter = painter,
-                    contentDescription = imageDescription,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .height(160.dp)
-                )
-                Text(
-                    text = "This is a dialog with buttons and an image.",
-                    modifier = Modifier.padding(16.dp),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Dismiss")
-                    }
-                    TextButton(
-                        onClick = { onConfirmation() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Confirm")
-                    }
-                }
-            }
-        }
+        // Calcula a diferença em milissegundos
+        val diferencaMillis = dataFim!!.time - dataInicio!!.time
+
+        // Converte a diferença de milissegundos para dias
+        return TimeUnit.DAYS.convert(diferencaMillis, TimeUnit.MILLISECONDS)
+    } catch (e: Exception) {
+        // Trate exceções, como ParseException, se as datas não estiverem no formato esperado
+        e.printStackTrace()
+        return -1
     }
 }
+
+fun isDateValid(dateString: String): Boolean {
+    val sdf = SimpleDateFormat("dd-MM-yyyy")
+    val currentDate = Date()
+
+    try {
+        val selectedDate = sdf.parse(dateString)
+
+        // Verifica se a data selecionada não é futura em relação à data atual
+        return selectedDate?.compareTo(currentDate) != 1
+    } catch (e: Exception) {
+        // Trate exceções, como ParseException, se a data não estiver no formato esperado
+        e.printStackTrace()
+        return false
+    }
+}
+
+
