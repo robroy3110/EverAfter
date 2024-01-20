@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import cm.everafter.screens.*
 import cm.everafter.screens.camera.FotoScreen
 import cm.everafter.screens.games.GamesScreen
+import cm.everafter.screens.home.HomeScreen
 import cm.everafter.screens.home.LogIn
 import cm.everafter.screens.home.ProfileScreen
 import cm.everafter.screens.home.Register

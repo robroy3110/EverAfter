@@ -1,10 +1,11 @@
-package cm.everafter.screens
+package cm.everafter.screens.home
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.util.Log
+import android.widget.CalendarView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,11 +15,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,12 +79,18 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.viewinterop.AndroidView
+import cm.everafter.classes.User
+import cm.everafter.screens.memories.getMonthByNumber
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import java.util.stream.IntStream.range
 
 
@@ -118,7 +123,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
     var user by remember { mutableStateOf<Perfil?>(null) }
     var userImageBitMap by remember { mutableStateOf<Bitmap?>(null) }
-    val notificationsUsers by remember { mutableStateOf<MutableList<Perfil?>>(mutableListOf())}
+    var notificationsUsers by remember { mutableStateOf<List<User?>?>(mutableListOf())}
     var otherUser by remember { mutableStateOf<Perfil?>(null) }
     var otherUserImageBitMap by remember { mutableStateOf<Bitmap?>(null)}
 
@@ -126,7 +131,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
 
     LaunchedEffect(Unit) {
-        val data = getUserDataFromFirebase()
+        val data = getUserDataFromFirebase(auth.currentUser!!.uid)
         user = data
 
     }
@@ -137,25 +142,8 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         val listener = object : ValueEventListener {
 
             override fun onDataChange(snapshot: DataSnapshot) {
-                val data = snapshot.value
-
-                // Check if the data is a HashMap
-                if (data is Map<*, *>) {
-
-                    // Map the data to your Perfil class fields
-                    val updatedUser = Perfil(
-                        name = data["name"] as? String ?: "",
-                        image = data["image"] as? String ?: "",
-                        relationship = data["relationship"] as? String ?: "",
-                        username = data["username"] as? String ?: "",
-                        notifications = (data["notifications"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                    )
-                    user = updatedUser
-                } else {
-                    // If it's not a HashMap, try to directly cast to Perfil
-                    val updatedUser = snapshot.getValue(Perfil::class.java)
-                    user = updatedUser
-                }
+                val updatedUser = snapshot.getValue(Perfil::class.java)
+                user = updatedUser
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -169,8 +157,31 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             userRef.removeEventListener(listener)
         }
     }
+    if(user != null){
+        DisposableEffect(relationShip?.date) {
+            // Observe changes in the relationship property of the user
+            val relationRef = db.reference.child("Relationships").child(user!!.relationship)
+            val listener = object : ValueEventListener {
 
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                    relationShip = updatedRelation
+                }
 
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error observing user data: ${error.message}")
+                }
+            }
+
+            val userRef = db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(user!!.relationship)
+
+            relationRef.addValueEventListener(listener)
+            // Remove the listener when the composable is disposed
+            onDispose {
+                relationRef.removeEventListener(listener)
+            }
+        }
+    }
 
     user?.let { thisUser ->
 
@@ -266,54 +277,61 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
 
         }else{
-
             if (thisUser.notifications.isNotEmpty()) {
                 LaunchedEffect(Unit) {
-                        for (i in thisUser.notifications) {
-                            val referenceUser = db.reference.child("Users").child(i.value).get().await()
-                            if (referenceUser.exists()) {
-                                val notifUser = referenceUser.getValue(Perfil::class.java)
-                                notificationsUsers.add(notifUser)
-                            }
-                        }
+                    notificationsUsers = getUserDataFromFirebaseWithImage(thisUser.notifications)
                 }
-            }
+                userImageBitMap?.let {
+                    notificationsUsers?.let {
+                        HomeScreenNoRelation(
+                            modifier = modifier,
+                            navController = navController,
+                            thisUser = thisUser,
+                            userBitMap = userImageBitMap!!,
+                            notificationsUsers = notificationsUsers!!.toList()
+                        )
+                    }
 
-            userImageBitMap?.let {
-                HomeScreenNoRelation(
-                    modifier = modifier,
-                    navController = navController,
-                    thisUser = thisUser,
-                    userBitMap = userImageBitMap!!,
-                    notificationsUsers = notificationsUsers.toList()
-                )
-            } ?: run {
-                // Mostra o indicador de carregamento enquanto espera
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.loading_img),
-                        contentDescription = null
+                } ?: run {
+                    // Mostra o indicador de carregamento enquanto espera
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.loading_img),
+                            contentDescription = null
+                        )
+                    }
+                }
+            }else{
+                userImageBitMap?.let {
+                    HomeScreenNoRelation(
+                        modifier = modifier,
+                        navController = navController,
+                        thisUser = thisUser,
+                        userBitMap = userImageBitMap!!,
+                        notificationsUsers = notificationsUsers!!.toList()
                     )
+                } ?: run {
+                    // Mostra o indicador de carregamento enquanto espera
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.loading_img),
+                            contentDescription = null
+                        )
+                    }
                 }
             }
-            }
-
-
-
         }
-        // Adjusted spacing between rows
-    }
 
-@Composable
-fun LoadingScreen(modifier: Modifier) {
-    Image(
-        modifier = modifier.size(200.dp),
-        painter = painterResource(R.drawable.loading_img),
-        contentDescription = stringResource(R.string.loading)
-    )
+
+
+    }
+    // Adjusted spacing between rows
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -328,6 +346,9 @@ fun HomeScreenRelation(
     relationShip: RelationShip?
 ) {
     var showDialogNotifications by remember { mutableStateOf(false) }
+    var showDialogChangeDate by remember { mutableStateOf(false) }
+    var showDialogErrorDate by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
@@ -366,7 +387,7 @@ fun HomeScreenRelation(
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notifications",
-                            tint = Color.Magenta, // Black icon color
+                            tint = Color.Black, // Black icon color
                             modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                         )
                     }
@@ -443,13 +464,99 @@ fun HomeScreenRelation(
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    for (i in range(0,10)){
-                                        Text("Teste $i")
-                                    }
+                                    Text("Nothing to see here!")
                                 }
                             }
                         }
                     )
+                }
+                if(showDialogChangeDate){
+                    Dialog(onDismissRequest = {showDialogChangeDate = false},
+                        content= {
+                            var date by remember {
+                                mutableStateOf("")
+                            }
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(450.dp)
+                                    .padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxSize()
+
+                                ) {
+                                    AndroidView(factory = { CalendarView(it) },
+                                        update = {
+                                            it.setOnDateChangeListener { calendarView, year, month, day ->
+                                                date = "$day-${month + 1}-$year"
+                                                if (!isDateValid(date)) {
+                                                   showDialogChangeDate = false
+                                                    showDialogErrorDate = true
+                                                }
+                                            }
+                                        })
+                                    Text(text = date)
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth().padding(
+                                            start = 24.dp,
+                                            top = 0.dp,
+                                            end = 24.dp,
+                                            bottom = 24.dp
+                                        ),
+                                        onClick = {
+
+                                            db.reference.child("Relationships")
+                                                .child(thisUser.relationship).child("date")
+                                                .setValue(
+                                                    date
+                                                )
+                                            showDialogChangeDate = false
+                                        }
+                                    ) {
+                                        Text(text = "Change Date")
+                                    }
+                                }
+                            }
+                        })
+                }
+                if(showDialogErrorDate){
+                    Dialog(onDismissRequest = {showDialogErrorDate = false},
+                        content= {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxSize()
+
+                                ) {
+                                    Text(text = "You can't choose a future date")
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth().padding(
+                                            start = 24.dp,
+                                            top = 24.dp,
+                                            end = 24.dp,
+                                            bottom = 24.dp
+                                        ),
+                                        onClick = {
+                                            showDialogErrorDate = false
+                                            showDialogChangeDate = true
+                                        }
+                                    ) {
+                                        Text(text = "Ok I'm sorry")
+                                    }
+                                }
+                            }
+                        })
                 }
             }
 
@@ -457,7 +564,7 @@ fun HomeScreenRelation(
                 Text(
                     text = relationShip!!.date,
                     modifier = Modifier
-                        .padding(top = 8.dp) // Adjusted padding as needed
+                        .padding(top = 8.dp,start= 150.dp).clickable { showDialogChangeDate = true } // Adjusted padding as needed
                 )
             }
 
@@ -470,13 +577,19 @@ fun HomeScreenRelation(
                             color = Color(0xFFD9D9D9), // Color D9D9D9
                             shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
                         )
+                        .clickable { showDialogChangeDate = true }
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    if(relationShip!!.date == "0-0-0"){
                     Text(
-                        text = "How long they are together",
-                        modifier = Modifier.wrapContentSize()
-                    )
+                        text = "Tap here to set the day you started dating!",
+                        modifier = Modifier.wrapContentSize())
+                    }else{
+                        Text(
+                            text = "You have been together for ${calcularDiferencaDias(relationShip.date,SimpleDateFormat("dd-MM-yyyy").format(Date()))} days",
+                            modifier = Modifier.wrapContentSize())
+                    }
                 }
             }
 
@@ -620,8 +733,8 @@ fun RelationshipProgressBar(points: Int) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap,notificationsUsers: List<Perfil?>) {
-    var searchUser by remember { mutableStateOf<Pair<Perfil,String>?>(null) }
+fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap,notificationsUsers: List<User?>) {
+    var searchUser by remember { mutableStateOf<User?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var showDialogUser by remember { mutableStateOf(false) }
     var showDialogError by remember { mutableStateOf(false) }
@@ -629,7 +742,6 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
     var showDialogNotificationSent by remember { mutableStateOf(false)}
     var showDialogNotifications by remember { mutableStateOf(false)}
     val username = remember { mutableStateOf(TextFieldValue()) }
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -760,12 +872,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 contentScale = ContentScale.Crop,
             )
         }
-        Text(
-            text = "Date they met",
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 8.dp) // Adjusted padding as needed
-        )
+
         if (showDialog) {
             Dialog(
                 onDismissRequest = { showDialog = false },
@@ -827,57 +934,72 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 Dialog(
                     onDismissRequest = { showDialogUser = false },
                     content = {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(375.dp)
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                        ){
-                            Column(
+                        Card{
+                            Surface(
                                 modifier = Modifier
-                                    .fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                    .fillMaxWidth(),
+                                shape = MaterialTheme.shapes.medium
                             ) {
+                                Column {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(16.dp)
+                                    ) {
+                                        // Imagem do perfil
+                                        Image(
+                                            it.image!!.asImageBitmap(),
+                                            contentDescription = null,
+                                            contentScale= ContentScale.FillBounds,
+                                            modifier = Modifier
+                                                .size(64.dp)
+                                                .clip(CircleShape)
+                                                .fillMaxSize()
+                                        )
 
-                                Text(
-                                    text = it.first.name,
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Text(
-                                    text = it.first.username,
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
+                                        // Espaçamento entre a imagem e o texto
+                                        Spacer(modifier = Modifier.width(16.dp))
 
-                                        if(it.first.relationship == "" && thisUser.relationship == "") {
-
-                                            db.reference.child("Users").child(it.second.trim()).child("notifications").child(thisUser.username).setValue(auth.currentUser!!.uid)
-
-                                            showDialogNotificationSent = showDialogNotificationSent.not()
-                                            showDialogUser = showDialogUser.not()
-                                           /* val newRelationShip = db.reference.child("Relationships").push()
-
-                                            val relationShipKey = newRelationShip.key
-
-                                            newRelationShip.setValue(
-                                                RelationShip(0,0,0,0,0,"Today idk", auth.currentUser!!.uid,it.second.trim())
+                                        // Informações do usuário
+                                        Column {
+                                            Text(
+                                                text = it.name,
+                                                fontWeight = FontWeight.Bold
                                             )
 
-                                            db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(relationShipKey)
-                                            db.reference.child("Users").child(it.second.trim()).child("relationship").setValue(relationShipKey)*/
-
-                                        }else{
-                                            showDialogUserInRelationship = showDialogUserInRelationship.not()
-                                            showDialogUser = showDialogUser.not()
+                                            Text(
+                                                text = it.username,
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
 
+                                        // Espaçamento entre o texto e o botão
+                                        Spacer(modifier = Modifier.weight(1f))
+
+                                        // Botão de checkmark
+
+
                                     }
-                                ) {
-                                    Text(text = "Add")
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth().padding(start= 24.dp,top= 0.dp,end = 24.dp,bottom = 24.dp),
+                                        onClick = {
+                                            Log.i("TESTET","${it.relationship} && ${thisUser.relationship}")
+                                            if(it.relationship == "" && thisUser.relationship == "") {
+
+                                                db.reference.child("Users").child(it.id.trim()).child("notifications").child(thisUser.username).setValue(
+                                                    auth.currentUser!!.uid)
+
+                                                showDialogNotificationSent = true
+                                                showDialogUser = false
+
+                                            }else{
+                                                showDialogUserInRelationship = true
+                                                showDialogUser = false
+                                            }
+
+                                        }
+                                    ) {
+                                        Text(text = "Add")
+                                    }
                                 }
                             }
                         }
@@ -1016,26 +1138,25 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             for (i in notificationsUsers){
                                 Card{
                                     Surface(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
+                                            .fillMaxWidth(),
                                         shape = MaterialTheme.shapes.medium
                                     ) {
                                         Row(
                                             modifier = Modifier
-                                                .fillMaxSize()
                                                 .padding(16.dp)
                                         ) {
                                             // Imagem do perfil
                                             Image(
-                                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                                i!!.image!!.asImageBitmap(),
                                                 contentDescription = null,
+                                                contentScale= ContentScale.FillBounds,
                                                 modifier = Modifier
                                                     .size(64.dp)
                                                     .clip(CircleShape)
@@ -1048,7 +1169,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                             // Informações do usuário
                                             Column {
                                                 Text(
-                                                    text = i!!.name,
+                                                    text = i.name,
                                                     fontWeight = FontWeight.Bold
                                                 )
 
@@ -1068,6 +1189,45 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                                 tint = MaterialTheme.colorScheme.secondary,
                                                 modifier = Modifier
                                                     .size(24.dp)
+                                                    .clickable {
+
+                                                        if (thisUser.relationship == "" && i.relationship == "") {
+
+                                                            val newRelationShip = db.reference
+                                                                .child("Relationships")
+                                                                .push()
+
+                                                            val relationShipKey =
+                                                                newRelationShip.key
+
+                                                            newRelationShip.setValue(
+                                                                RelationShip(
+                                                                    0,
+                                                                    0,
+                                                                    0,
+                                                                    0,
+                                                                    0,
+                                                                    "0-0-0",
+                                                                    auth.currentUser!!.uid,
+                                                                    i.id
+                                                                )
+                                                            )
+
+                                                            db.reference
+                                                                .child("Users")
+                                                                .child(auth.currentUser!!.uid)
+                                                                .child("relationship")
+                                                                .setValue(relationShipKey)
+                                                            db.reference
+                                                                .child("Users")
+                                                                .child(i.id)
+                                                                .child("relationship")
+                                                                .setValue(relationShipKey)
+                                                        }else{
+                                                            showDialogUserInRelationship = true
+                                                            showDialogNotifications = false
+                                                        }
+                                                    }
                                             )
                                         }
                                     }
@@ -1090,7 +1250,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "How long they are together",
+                text = "You still don't have a partner, try pulling some first!",
                 modifier = Modifier.wrapContentSize()
             )
         }
@@ -1104,9 +1264,9 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
 }
 
 
-suspend fun getUserDataFromFirebase(): Perfil? {
+suspend fun getUserDataFromFirebase(userId: String): Perfil? {
     return try {
-        val snapshot = db.reference.child("Users").child(auth.currentUser!!.uid).get().await()
+        val snapshot = db.reference.child("Users").child(userId).get().await()
         if (snapshot.exists()) {
             snapshot.getValue(Perfil::class.java)
         } else {
@@ -1118,14 +1278,54 @@ suspend fun getUserDataFromFirebase(): Perfil? {
     }
 }
 
-suspend fun searchUserDataFromFirebase(username:String): Pair<Perfil,String>? {
+suspend fun getUserDataFromFirebaseWithImage(users: Map<String,String>): List<User?> {
+    val returnUsers = mutableListOf<User?>()
+    try {
+        for(i in users){
+            val snapshot = db.reference.child("Users").child(i.value).get().await()
+            if (snapshot.exists()) {
+                val perfil = snapshot.getValue(Perfil::class.java)
+                val bitmap = if (perfil!!.image != "") {
+                    val ref = storageRef.child("ProfilePics/${perfil.image}")
+                    val megabytes: Long = 1024 * 1024
+                    val byteArray = ref.getBytes(megabytes).await()
+                    BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                } else {
+                    val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
+                    val megabytes: Long = 1024 * 1024
+                    val byteArray = ref.getBytes(megabytes).await()
+                    BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                }
+                returnUsers.add(User(perfil.name, perfil.username, i.value, bitmap,perfil.relationship))
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("Firebase", "Error: ${e.message}")
+        return returnUsers
+    }
+    return returnUsers
+}
+
+suspend fun searchUserDataFromFirebase(username:String): User? {
     try {
         val snapshot = db.reference.child("Usernames").child(username).get().await()
         if (snapshot.exists()) {
             val userToken = snapshot.getValue(String::class.java)
             val user = db.reference.child("Users").child(userToken!!).get().await()
             if(user.exists()){
-                return Pair(user.getValue(Perfil::class.java)!!,userToken)
+                val perfil = user.getValue(Perfil::class.java)
+                val bitmap = if (perfil!!.image != "") {
+                    val ref = storageRef.child("ProfilePics/${perfil.image}")
+                    val megabytes: Long = 1024 * 1024
+                    val byteArray = ref.getBytes(megabytes).await()
+                    BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                } else {
+                    val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
+                    val megabytes: Long = 1024 * 1024
+                    val byteArray = ref.getBytes(megabytes).await()
+                    BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                }
+                return User(perfil.name, perfil.username, userToken, bitmap,perfil.relationship)
             }
         } else {
             return null
@@ -1138,58 +1338,41 @@ suspend fun searchUserDataFromFirebase(username:String): Pair<Perfil,String>? {
 }
 
 
-@Composable
-fun DialogWithImage(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    painter: Painter,
-    imageDescription: String,
-) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        // Draw a rectangle shape with rounded corners inside the dialog
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(375.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Image(
-                    painter = painter,
-                    contentDescription = imageDescription,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .height(160.dp)
-                )
-                Text(
-                    text = "This is a dialog with buttons and an image.",
-                    modifier = Modifier.padding(16.dp),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Dismiss")
-                    }
-                    TextButton(
-                        onClick = { onConfirmation() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Confirm")
-                    }
-                }
-            }
-        }
+fun calcularDiferencaDias(data1: String, data2: String): Long {
+    // Formato da data
+    val formato = SimpleDateFormat("dd-MM-yyyy")
+
+    try {
+        // Parse das datas para objetos Date
+        val dataInicio = formato.parse(data1)
+        val dataFim = formato.parse(data2)
+
+        // Calcula a diferença em milissegundos
+        val diferencaMillis = dataFim!!.time - dataInicio!!.time
+
+        // Converte a diferença de milissegundos para dias
+        return TimeUnit.DAYS.convert(diferencaMillis, TimeUnit.MILLISECONDS)
+    } catch (e: Exception) {
+        // Trate exceções, como ParseException, se as datas não estiverem no formato esperado
+        e.printStackTrace()
+        return -1
     }
 }
+
+fun isDateValid(dateString: String): Boolean {
+    val sdf = SimpleDateFormat("dd-MM-yyyy")
+    val currentDate = Date()
+
+    try {
+        val selectedDate = sdf.parse(dateString)
+
+        // Verifica se a data selecionada não é futura em relação à data atual
+        return selectedDate?.compareTo(currentDate) != 1
+    } catch (e: Exception) {
+        // Trate exceções, como ParseException, se a data não estiver no formato esperado
+        e.printStackTrace()
+        return false
+    }
+}
+
+
