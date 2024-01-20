@@ -30,7 +30,6 @@ import androidx.navigation.NavController
 import cm.everafter.classes.Perfil
 import cm.everafter.R
 import cm.everafter.navigation.Screens
-import cm.everafter.screens.db
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
