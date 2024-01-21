@@ -14,6 +14,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.defaultModule
 import java.util.Calendar
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 
@@ -44,34 +45,33 @@ class App : Application() {
     }
 
     private fun initializeWorkManager() {
-        // Obtém o horário atual
-        val currentTimeMillis = System.currentTimeMillis()
-        val currentCalendar = Calendar.getInstance()
-        currentCalendar.timeInMillis = currentTimeMillis
-
-        // Configura a hora para 18:00:00
+        // Configura a hora para 18:00:00 todos os dias
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 18)
-        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.HOUR_OF_DAY, 21)
+        calendar.set(Calendar.MINUTE, 31)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
 
-        // Se o horário atual for após as 18h, agende para o próximo dia
-        if (currentCalendar.after(calendar)) {
+        // Calcula o atraso inicial garantindo que seja sempre positivo
+        val delayInMillis = if (calendar.timeInMillis > System.currentTimeMillis()) {
+            calendar.timeInMillis - System.currentTimeMillis()
+        } else {
+            // Se já passou das 18h hoje, calcula o atraso para o mesmo horário no próximo dia
             calendar.add(Calendar.DAY_OF_MONTH, 1)
+            calendar.timeInMillis - System.currentTimeMillis()
         }
 
-        // Calcula o tempo de espera até as 18h
-        val delayInMillis = calendar.timeInMillis - currentTimeMillis
-
         // Cria o WorkRequest para ser executado uma vez por dia às 18h
-        val checkFreeGamesWorkRequest = OneTimeWorkRequestBuilder<CheckFreeGamesWorker>()
-            .setInitialDelay(delayInMillis, TimeUnit.MILLISECONDS)
+        val checkFreeGamesWorkRequest = PeriodicWorkRequestBuilder<CheckFreeGamesWorker>(
+            1, // repetir a cada 1 dia
+            TimeUnit.DAYS
+        )
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build()
             )
+            .setInitialDelay(delayInMillis, TimeUnit.MILLISECONDS)
             .build()
 
         // Agenda o trabalho
