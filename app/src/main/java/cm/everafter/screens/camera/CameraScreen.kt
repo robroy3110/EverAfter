@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cm.everafter.classes.CameraState
 import cm.everafter.classes.rotateBitmap
@@ -48,8 +49,19 @@ import org.koin.androidx.compose.koinViewModel
 import java.io.ByteArrayOutputStream
 import java.text.DateFormat.getDateInstance
 import java.util.Date
-
-
+import android.location.Location
+import android.location.LocationManager
+import java.util.Locale
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.os.Environment
+import androidx.core.app.ActivityCompat
+import androidx.core.content.getSystemService
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.storage.ktx.storage
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -72,7 +84,31 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
 
                     val mainExecutor = ContextCompat.getMainExecutor(context)
 
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+                    if(ActivityCompat.checkSelfPermission(context,
+                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                        var location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+
+                        if(location != null){
+                            val latitude = location.latitude
+                            val longitude = location.longitude
+
+                            val metadata = ImageCapture.Metadata().apply {
+                                location = Location("gps").apply{
+                                    this.latitude = latitude
+                                    this.longitude = longitude
+                                }
+                            }
+                        }
+
+                    }
+
+
+
+
                     cameraController.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback(){
+
                         override fun onCaptureSuccess(image: ImageProxy){
 
                             val bitmapImage = image.toBitmap().rotateBitmap(image.imageInfo.rotationDegrees)

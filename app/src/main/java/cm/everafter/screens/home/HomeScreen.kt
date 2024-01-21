@@ -157,7 +157,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             userRef.removeEventListener(listener)
         }
     }
-    if(user != null){
+    if(user != null && user!!.relationship != ""){
         DisposableEffect(relationShip?.date) {
             // Observe changes in the relationship property of the user
             val relationRef = db.reference.child("Relationships").child(user!!.relationship)

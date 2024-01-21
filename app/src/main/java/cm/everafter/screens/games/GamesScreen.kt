@@ -1,6 +1,7 @@
 package cm.everafter.screens.games
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -84,7 +85,6 @@ fun GamesScreen(
 
                 // Certifique-se de ter uma Date representando a data atual
                 val currentDate = Calendar.getInstance().time
-
                 // Verifica se a data de hoje está entre free_start_date e free_end_date
                 currentDate in startDate..endDate
             }

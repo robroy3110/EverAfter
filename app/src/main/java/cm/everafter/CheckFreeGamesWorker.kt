@@ -1,6 +1,7 @@
 package cm.everafter
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import cm.everafter.classes.Game
@@ -22,7 +23,6 @@ class CheckFreeGamesWorker(appContext: Context, workerParams: WorkerParameters) 
 
             // Transforme o snapshot em uma lista de jogos
             val games = gamesSnapshot.children.mapNotNull { it.getValue(Game::class.java) }
-
             // Verifique e notifique os novos jogos gratuitos
             val gameNotificationService = NotificationService(applicationContext)
 
