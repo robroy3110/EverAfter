@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -45,11 +47,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import cm.everafter.R
 import cm.everafter.classes.Playlist
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
@@ -114,49 +118,11 @@ fun PlayListScreen(
                 .padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-
-
-            /* --------------------------------------- SEARCH BAR ---------------------------------------------------- */
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp), // Adjusted padding for reduced height
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Search Bar with search icon on the right and the same color as the background
-                var searchText by remember { mutableStateOf("") }
-
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    leadingIcon = { },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = Color(0xFF8C52FF) // Use the primary color as the icon color
-                        )
-                    },
-                    placeholder = {
-                        Text(text = "Search playlists in your library...")
-                    },
-                    modifier = Modifier
-                        .weight(0.2f)
-                        .padding(start = 2.dp)
-                        .height(53.dp) // Adjusted height for reduced height
-                        .clip(RoundedCornerShape(12.dp)) // Adjust the corner radius as needed
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, color = Color(0xFF8C52FF), shape = RoundedCornerShape(12.dp)) // Changed outline color
-                )
-            }
             // Show the dialog when showDialog is true
             if (showDialog) {
                 showAddPlaylistDialog(userViewModel = userViewModel, onDismiss = { showDialog = false })
             }
         }
-
-
         Spacer(modifier = Modifier.height(16.dp))
 
         /* ------------------------------------- ADDING PLAYLISTS  ------------------------------------- */
@@ -168,23 +134,44 @@ fun PlayListScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Playlists",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
-
-            // Add Playlist Button
-            IconButton(
-                onClick = {
-                    // Open the dialog when the button is clicked
-                    showDialog = true
+            // Check if the user has a relationship before showing the add playlist button
+            if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
+                Text(
+                    text = "Playlists",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+                // Add Playlist Button
+                IconButton(
+                    onClick = {
+                        // Open the dialog when the button is clicked
+                        showDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Playlist",
+                        tint = Color(0xFF8C52FF),
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Playlist",
-                    tint = Color(0xFF8C52FF),
+            }
+            // Show the message only if the user's relationship is null or empty
+            if (userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
+                // Display the "couple.png" image along with the message
+                Image(
+                    painter = painterResource(id = R.drawable.couple), // Replace R.drawable.couple with your actual resource ID
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .padding(end = 8.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "First join a relationship to create a shared playlist with your partner",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }
