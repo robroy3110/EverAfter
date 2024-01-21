@@ -31,8 +31,8 @@ class NotificationService(
     fun showNewFreeGameNotification(game: Game) {
 
         val notification = NotificationCompat.Builder(context, "game_notification")
-            .setContentTitle("Novo Jogo Gratuito Disponível!")
-            .setContentText("Confira o novo jogo gratuito disponível agora.")
+            .setContentTitle(game.title + " is now FREE!")
+            .setContentText("Check this game out and play it together!")
             .setSmallIcon(R.drawable.game_icon)
             .setPriority(NotificationManager.IMPORTANCE_HIGH)
             .setAutoCancel(true)

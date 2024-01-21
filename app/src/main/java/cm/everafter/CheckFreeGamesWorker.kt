@@ -11,8 +11,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.tasks.await
 
-val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
-
 class CheckFreeGamesWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
@@ -53,11 +51,6 @@ class CheckFreeGamesWorker(appContext: Context, workerParams: WorkerParameters) 
 
         // Verifica se a data de hoje é igual a free_start_date e se a hora é 18:00 ou posterior
         return currentDate.compareTo(startDate) == 0
-    }
-
-    private fun getCurrentDateTime(): Date {
-        val calendar = Calendar.getInstance()
-        return calendar.time
     }
 
 }
