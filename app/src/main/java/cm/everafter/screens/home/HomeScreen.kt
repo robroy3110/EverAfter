@@ -109,9 +109,9 @@ fun HomeScreen(
     if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
-
         ResultScreen(modifier = modifier.fillMaxWidth(), navController,viewModel)
     }
+
 }
 
 
@@ -605,26 +605,56 @@ fun HomeScreenRelation(
 
             item {
                 Text("Dates")
-                RelationshipProgressBar(relationShip!!.pointsDate)
+                RelationshipProgressBar(relationShip!!.pointsDate, "Dates")
 
                 Text("Music")
-                RelationshipProgressBar(25)
+                RelationshipProgressBar(250, "Music")
 
                 Text("Gaming")
-                RelationshipProgressBar(relationShip!!.pointsGames)
+                RelationshipProgressBar(relationShip!!.pointsGames, "Gaming")
 
                 Text("Pictures")
-                RelationshipProgressBar(relationShip!!.pointsPictures)
+                RelationshipProgressBar(relationShip!!.pointsPictures, "Pictures")
             }
         }
     }
 }
 
 @Composable
-fun RelationshipProgressBar(points: Int) {
-    val likersFill = points in 1..10
-    val loversFill = points in 11..20
-    val addictedFill = points > 20
+fun RelationshipProgressBar(points: Int, quest: String) {
+
+    val likersFill: Boolean
+    val loversFill: Boolean
+    val addictedFill: Boolean
+
+    when (quest) {
+        "Dates" -> {
+            likersFill = points in 1..200
+            loversFill = points in 201..350
+            addictedFill = points > 350
+        }
+        "Music" -> {
+            likersFill = points in 1..450
+            loversFill = points in 451..920
+            addictedFill = points > 921
+        }
+        "Gaming" -> {
+            likersFill = points in 1..360
+            loversFill = points in 331..660
+            addictedFill = points > 661
+        }
+        "Pictures" -> {
+            likersFill = points in 1..300
+            loversFill = points in 301..500
+            addictedFill = points > 500
+        }
+        else -> {
+            likersFill = false
+            loversFill = false
+            addictedFill = false
+        }
+    }
+
 
     var likersColor = Color(0xFFD9D9D9)
     var loversColor = Color(0xFFD9D9D9)
@@ -710,10 +740,31 @@ fun RelationshipProgressBar(points: Int) {
                 drawContext.canvas.nativeCanvas.drawText(text, textX, textY, paint)
 
                 // Adiciona o texto da faixa
-                val rangeText = when (i) {
-                    0 -> "1-10"
-                    1 -> "11-20"
-                    2 -> "21+"
+                val rangeText = when (quest) {
+                    "Dates" -> when (i) {
+                        0 -> "1-200"
+                        1 -> "201-350"
+                        2 -> "351+"
+                        else -> ""
+                    }
+                    "Music" -> when (i) {
+                        0 -> "1-450"
+                        1 -> "451-920"
+                        2 -> "921+"
+                        else -> ""
+                    }
+                    "Gaming" -> when (i) {
+                        0 -> "1-360"
+                        1 -> "361-660"
+                        2 -> "661+"
+                        else -> ""
+                    }
+                    "Pictures" -> when (i) {
+                        0 -> "1-300"
+                        1 -> "301-500"
+                        2 -> "501+"
+                        else -> ""
+                    }
                     else -> ""
                 }
 
