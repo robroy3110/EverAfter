@@ -1,5 +1,6 @@
 package cm.everafter.navigation
 
+import EditPlaylistScreen
 import PlayListScreen
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -7,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import cm.everafter.GameNotificationService
+import cm.everafter.classes.Playlist
 import cm.everafter.screens.*
 import cm.everafter.screens.camera.FotoScreen
 import cm.everafter.screens.games.GamesScreen
@@ -17,7 +19,6 @@ import cm.everafter.screens.home.Register
 import cm.everafter.screens.memories.MemoriesScreen
 import cm.everafter.screens.playlist.AddSongsScreen
 import cm.everafter.screens.playlist.PlaylistDetailsScreen
-
 import cm.everafter.viewModels.UserViewModel
 
 @Composable
@@ -60,6 +61,16 @@ fun AppNavigation(
             )
         }
 
+        composable(route = "${Screens.EditPlaylistScreen.route}/{name}") { backStackEntry ->
+            val playlistName = backStackEntry.arguments?.getString("name")
+            if (playlistName != null) {
+                EditPlaylistScreen(
+                    navController = navController,
+                    playlistViewModel = viewModel(),
+                    playlistName = playlistName
+                )
+            }
+        }
 
         composable(route = Screens.AddSongsScreen.route) {
             AddSongsScreen(navController = navController,

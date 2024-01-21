@@ -156,4 +156,31 @@ class PlaylistViewModel : ViewModel() {
             }
         })
     }
+
+    fun saveEditedPlaylistToFirebase(playlist: Playlist) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        val query = playlistsRef.orderByChild("name").equalTo(playlist.name)
+
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (childSnapshot in snapshot.children) {
+                    val playlistKey = childSnapshot.key
+                    if (playlistKey != null) {
+                        // Update the playlist details
+                        playlistsRef.child(playlistKey).setValue(playlist)
+                        return
+                    }
+                }
+
+                // If no matching playlist is found, you can handle it accordingly
+                // For example, you can log an error or show a message to the user.
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error if the query is canceled
+            }
+        })
+    }
 }

@@ -126,11 +126,11 @@ fun AddSongsScreen(
                     },
                     isClicked = index == selectedItemIndex
                 )
-                Divider(
+/*                Divider(
                     color = MaterialTheme.colorScheme.primary,
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 4.dp)
-                )
+                )*/
             }
         }
     }
