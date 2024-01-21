@@ -6,18 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -28,25 +23,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import cm.everafter.navigation.Screens
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import cm.everafter.GameNotificationService
+import cm.everafter.NotificationService
 import cm.everafter.classes.Game
 import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
-import coil.size.Scale
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -56,9 +48,10 @@ val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.fi
 @Composable
 fun GamesScreen(
     navController: NavController,
-    gameNotificationService: GameNotificationService,
+    notificationService: NotificationService,
     modifier: Modifier = Modifier
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -66,7 +59,7 @@ fun GamesScreen(
                 actions = {
                     Button(
                         onClick = {
-                            gameNotificationService.showBasicNotification()
+                            notificationService.showBasicNotification()
                         }
                     ) {
                         Text(text = "Show basic notifications")
@@ -82,6 +75,20 @@ fun GamesScreen(
             ) {
             var games by remember { mutableStateOf(emptyList<Game>()) }
             val gamesRef = db.getReference("Games")
+
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+            val freeGamesToday = games.filter { game ->
+                val startDate = dateFormat.parse(game.free_start_date)
+                val endDate = dateFormat.parse(game.free_end_date)
+
+                // Certifique-se de ter uma Date representando a data atual
+                val currentDate = Calendar.getInstance().time
+
+                // Verifica se a data de hoje está entre free_start_date e free_end_date
+                currentDate in startDate..endDate
+            }
+
 
             LaunchedEffect(gamesRef) {
                 gamesRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -103,7 +110,7 @@ fun GamesScreen(
                 .padding(top = 80.dp)
                 .padding(horizontal = 20.dp)
             ) {
-                itemsIndexed(games) { index, game ->
+                itemsIndexed(freeGamesToday) { index, game ->
                     GameItem(game = game)
                 }
 
