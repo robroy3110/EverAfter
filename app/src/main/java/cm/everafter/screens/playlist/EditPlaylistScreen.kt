@@ -160,7 +160,7 @@ fun EditPlaylistScreen(
             )
         }
 
-        // Playlist's List of Songs
+/*        // Playlist's List of Songs
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
                 items(songs) { song ->
@@ -168,7 +168,7 @@ fun EditPlaylistScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-        }
+        }*/
     }
 }
 

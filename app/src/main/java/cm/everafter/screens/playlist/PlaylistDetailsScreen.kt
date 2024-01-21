@@ -2,6 +2,7 @@ package cm.everafter.screens.playlist
 
 import PlaylistImage
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,13 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +43,10 @@ import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.google.firebase.Firebase
+import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +60,12 @@ fun PlaylistDetailsScreen(
     // Initialize Firebase Storage
     val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
     val storageRef = storage.reference
+
+    // Currently playing song
+    var currentlyPlayingSong by remember { mutableStateOf<Song?>(null) }
+
+    // State to keep track of selected item index
+    var selectedItemIndex by remember { mutableStateOf(-1) }
 
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
@@ -173,30 +187,115 @@ fun PlaylistDetailsScreen(
             }
         }
 
-        // Playlist's List of Songs
+// PlaylistDetailsScreen.kt
+
+// PlaylistDetailsScreen.kt
+
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
-                items(songs) { song ->
-                    SongItemOnDetailsScreen(song = song)
+                itemsIndexed(songs) { index, song ->
+                    // Assuming you have a SongDetailsItem composable for displaying song details
+                    SongDetailsItem(
+                        storageRef=storageRef,
+                        song = song,
+                        onItemClick = {
+                            // Handle item click and update the selected item index
+                            selectedItemIndex = index
+                        },
+                        isPlaying = currentlyPlayingSong == song,
+                        onPlayClick = {
+                            // Start playing the song
+                            playlistViewModel.playSong(song)
+                            currentlyPlayingSong = song
+                        },
+                        onStopClick = {
+                            // Stop playing the song
+                            playlistViewModel.stopPlayback()
+                            currentlyPlayingSong = null
+                        },
+                        isClicked = index == selectedItemIndex
+                    )
+
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    // Additional content related to each song, if needed
                 }
             }
         }
+
+
+
+
     }
 }
 
 
 @Composable
-fun SongItemOnDetailsScreen(song: Song) {
+fun SongDetailsItem(
+    storageRef: StorageReference,
+    song: Song,
+    onItemClick: (Song) -> Unit,
+    isPlaying: Boolean,
+    onPlayClick: () -> Unit,
+    onStopClick: () -> Unit,
+    isClicked: Boolean
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onItemClick.invoke(song) },
         verticalAlignment = Alignment.CenterVertically
     ) {
 
+        // Display song image
+        SongImage(song = song, storageRef = storageRef)
+
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = song.name, fontSize = 16.sp)
+
+        // Column for song name and artist
+        Column {
+            // Song name
+            Text(text = song.name, fontSize = 16.sp)
+
+            // Song artist
+            Text(
+                text = song.artist,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        // Play Icon (conditionally displayed)
+        if (isClicked) {
+            IconButton(
+                onClick = { onPlayClick() },
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play",
+                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
+                )
+            }
+        }
+        // Stop Icon (conditionally displayed)
+        if (isClicked) {
+            IconButton(
+                onClick = { onStopClick() },
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = "Stop",
+                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
+                )
+            }
+        }
     }
 }
-
