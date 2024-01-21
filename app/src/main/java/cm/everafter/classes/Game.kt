@@ -11,5 +11,7 @@ data class Game(
     val publisher: String = "",
     val developer: String = "",
     val releaseDate: String = "",
-    val freeToGameProfileUrl: String = ""
+    val freeToGameProfileUrl: String = "",
+    val free_start_date: String = "",
+    val free_end_date: String = ""
 )
