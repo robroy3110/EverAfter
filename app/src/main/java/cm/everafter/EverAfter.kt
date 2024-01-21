@@ -31,7 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EverAfter(gameNotificationService: GameNotificationService) {
+fun EverAfter(gameNotificationService: NotificationService) {
     val context = LocalContext.current
 
     val listOfNavItems = listOf(

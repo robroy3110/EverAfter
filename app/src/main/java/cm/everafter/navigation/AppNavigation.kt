@@ -6,7 +6,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import cm.everafter.GameNotificationService
+import cm.everafter.NotificationService
 import cm.everafter.screens.*
 import cm.everafter.screens.camera.FotoScreen
 import cm.everafter.screens.games.GamesScreen
@@ -23,7 +23,7 @@ import cm.everafter.viewModels.UserViewModel
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    gameNotificationService: GameNotificationService
+    notificationService: NotificationService
 ) {
     val userViewModel: UserViewModel = viewModel()
     NavHost(
@@ -46,7 +46,7 @@ fun AppNavigation(
             ProfileScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.GamesScreen.route){
-            GamesScreen(navController = navController, gameNotificationService)
+            GamesScreen(navController = navController, notificationService)
         }
         composable(route = Screens.PlaylistScreen.route){
             PlayListScreen(navController = navController, userViewModel = userViewModel)

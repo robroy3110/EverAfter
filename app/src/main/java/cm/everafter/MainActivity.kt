@@ -1,7 +1,5 @@
 package cm.everafter
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,7 +35,7 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
             EverAfterTheme {
                 val postNotificationPermission=
                     rememberPermissionState(permission = POST_NOTIFICATIONS)
-                val gameNotificationService=GameNotificationService(this)
+                val gameNotificationService=NotificationService(this)
                 LaunchedEffect(key1 = true ){
                     if(!postNotificationPermission.status.isGranted){
                         postNotificationPermission.launchPermissionRequest()
