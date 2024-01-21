@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 
 import android.media.MediaPlayer
 import android.net.Uri
+import android.util.Log
 import cm.everafter.classes.Playlist
 
 import cm.everafter.classes.Song
@@ -76,21 +77,29 @@ class PlaylistViewModel : ViewModel() {
     // Function to play a song
     fun playSong(song: Song) {
         mediaPlayer?.reset()
+        Log.e("MediaPlayer", "Deu RESET: ")
+
         mediaPlayer = MediaPlayer().apply {
             // Assuming storagePath is a Firebase Cloud Storage path
             val storageReference = Firebase.storage.getReference(getRelativePath(song.storagePath))
+            Log.e("MediaPlayer", storageReference.toString())
             storageReference.downloadUrl.addOnSuccessListener { uri ->
                 try {
                     setDataSource(uri.toString())
                     prepare()
                     start()
+                    Log.e("MediaPlayer", "Started Song!")
                 } catch (e: Exception) {
                     // Handle exception related to setting the data source
                     e.printStackTrace()
+                    Log.e("MediaPlayer", "Error setting data source: ${e.message}")
+
                 }
             }.addOnFailureListener { exception ->
                 // Handle failure to get download URL
                 exception.printStackTrace()
+                Log.e("MediaPlayer", "Error getting download URL: ${exception.message}")
+
             }
         }
     }
@@ -116,10 +125,10 @@ class PlaylistViewModel : ViewModel() {
 
 
     // Function to add songs to the playlist
-    fun addSongsToPlaylist(songs: List<Song>) {
+    fun addSongsToPlaylist(playlistName: String, songs: List<Song>) {
         // Ensure that there's a selected playlist
-        val playlistName = selectedPlaylistName
         if (playlistName.isEmpty()) {
+            println("Nao recebeu nome da playlist")
             return
         }
 
@@ -156,6 +165,7 @@ class PlaylistViewModel : ViewModel() {
             }
         })
     }
+
 
     fun saveEditedPlaylistToFirebase(playlist: Playlist) {
         val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")

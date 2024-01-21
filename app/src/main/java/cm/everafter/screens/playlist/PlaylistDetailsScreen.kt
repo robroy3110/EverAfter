@@ -161,9 +161,8 @@ fun PlaylistDetailsScreen(
             // Add Button
             IconButton(
                 onClick = {
-                    // Handle add button click
                     // Navigate to the AddSongsScreen or perform any other action
-                    navController.navigate(Screens.AddSongsScreen.route)
+                    navController.navigate("${Screens.AddSongsScreen.route}/${playlistName}")
                 }
             ) {
                 Icon(

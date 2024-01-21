@@ -69,7 +69,7 @@ fun EditPlaylistScreen(
 
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
-        println("----------------- Playlist Details Screen -----------------")
+        println("----------------- EDIT Playlist Details Screen -----------------")
 
         if (playlistName != null) {
             playlistViewModel.getPlaylist(playlistName)
@@ -158,21 +158,6 @@ fun EditPlaylistScreen(
                 fontSize = 18.sp,
                 modifier = Modifier.weight(0.8f)
             )
-
-            // Add Button
-            IconButton(
-                onClick = {
-                    // Handle add button click
-                    // Navigate to the AddSongsScreen or perform any other action
-                    navController.navigate(Screens.AddSongsScreen.route)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = Color(0xFF8C52FF),
-                )
-            }
         }
 
         // Playlist's List of Songs

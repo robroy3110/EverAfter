@@ -71,9 +71,13 @@ fun AppNavigation(
                 )
             }
         }
-        composable(route = Screens.AddSongsScreen.route) {
-            AddSongsScreen(navController = navController,
-                playlistViewModel = viewModel())
+        composable(route = "${Screens.AddSongsScreen.route}/{name}") {backStackEntry ->
+            val playlistName = backStackEntry.arguments?.getString("name")
+            if (playlistName != null) {
+                AddSongsScreen(navController = navController,
+                    playlistViewModel = viewModel(),
+                    playlistName = playlistName)
+            }
         }
         composable(route = Screens.LogInScreen.route){
             LogIn(navController = navController)
