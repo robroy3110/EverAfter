@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 
 import android.media.MediaPlayer
 import android.net.Uri
+import android.util.Log
 import cm.everafter.classes.Playlist
 
 import cm.everafter.classes.Song
@@ -76,21 +77,29 @@ class PlaylistViewModel : ViewModel() {
     // Function to play a song
     fun playSong(song: Song) {
         mediaPlayer?.reset()
+        Log.e("MediaPlayer", "Deu RESET: ")
+
         mediaPlayer = MediaPlayer().apply {
             // Assuming storagePath is a Firebase Cloud Storage path
             val storageReference = Firebase.storage.getReference(getRelativePath(song.storagePath))
+            Log.e("MediaPlayer", storageReference.toString())
             storageReference.downloadUrl.addOnSuccessListener { uri ->
                 try {
                     setDataSource(uri.toString())
                     prepare()
                     start()
+                    Log.e("MediaPlayer", "Started Song!")
                 } catch (e: Exception) {
                     // Handle exception related to setting the data source
                     e.printStackTrace()
+                    Log.e("MediaPlayer", "Error setting data source: ${e.message}")
+
                 }
             }.addOnFailureListener { exception ->
                 // Handle failure to get download URL
                 exception.printStackTrace()
+                Log.e("MediaPlayer", "Error getting download URL: ${exception.message}")
+
             }
         }
     }
@@ -116,10 +125,10 @@ class PlaylistViewModel : ViewModel() {
 
 
     // Function to add songs to the playlist
-    fun addSongsToPlaylist(songs: List<Song>) {
+    fun addSongsToPlaylist(playlistName: String, songs: List<Song>) {
         // Ensure that there's a selected playlist
-        val playlistName = selectedPlaylistName
         if (playlistName.isEmpty()) {
+            println("Nao recebeu nome da playlist")
             return
         }
 
@@ -153,6 +162,34 @@ class PlaylistViewModel : ViewModel() {
             override fun onCancelled(error: DatabaseError) {
                 // Handle the error
                 println("Couldn't get the Playlist from Firebase for some reason...")
+            }
+        })
+    }
+
+
+    fun saveEditedPlaylistToFirebase(playlist: Playlist) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        val query = playlistsRef.orderByChild("name").equalTo(playlist.name)
+
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (childSnapshot in snapshot.children) {
+                    val playlistKey = childSnapshot.key
+                    if (playlistKey != null) {
+                        // Update the playlist details
+                        playlistsRef.child(playlistKey).setValue(playlist)
+                        return
+                    }
+                }
+
+                // If no matching playlist is found, you can handle it accordingly
+                // For example, you can log an error or show a message to the user.
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error if the query is canceled
             }
         })
     }

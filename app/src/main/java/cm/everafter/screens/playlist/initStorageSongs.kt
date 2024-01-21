@@ -12,7 +12,7 @@ fun initializeSongs() {
     val song12 = createSong("Always Somewhere", "Scorpions", "Lovedrive", "", "gs://everafter-382e1.appspot.com/Songs/Scorpions_-_Always_Somewhere_HQ_Audio.mp3","Scorpions-album-lovedrive.jpg")
     val song2 = createSong("Arabella", "Arctic Monkeys", "AM", "", "gs://everafter-382e1.appspot.com/Songs/Arctic_Monkeys_-_Arabella_Official_Audio.mp3", "AM.jpg")
 
-    val song3 = createSong("Black No.1 Little Miss Scare All", "Type O Negative", "Bloody Kisses (Top Shelf Edition)", "", "gs://everafter-382e1.appspot.com/Songs/Black_No._1_Little_Miss_Scare_-All.mp3","Bloodykisses.jpg")
+    val song3 = createSong("Black No.1", "Type O Negative", "Bloody Kisses (Top Shelf Edition)", "", "gs://everafter-382e1.appspot.com/Songs/Black_No._1_Little_Miss_Scare_-All.mp3","Bloodykisses.jpg")
     val song4 = createSong("By the Way", "Red Hot Chilli Peppers", "By the Way", "", "gs://everafter-382e1.appspot.com/Songs/By_the_Way.mp3","Red_Hot_Chili_Peppers_-_By_the_Way.jpg")
     val song15 = createSong("Bring Me To Life", "Evanescence", "Fallen", "", "gs://everafter-382e1.appspot.com/Songs/Bring_Me_To_Life_-_Evanescence_Audio.mp3", "Fallen.jpg")
 

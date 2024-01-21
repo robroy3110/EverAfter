@@ -14,22 +14,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,18 +44,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import cm.everafter.R
 import cm.everafter.classes.Playlist
-import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
 import cm.everafter.viewModels.PlaylistViewModel
 import cm.everafter.viewModels.UserViewModel
@@ -201,7 +191,7 @@ fun PlayListScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
-// Retrieve playlists from the database
+        // Retrieve playlists from the database
         DisposableEffect(Unit) {
             val playlistsListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -299,59 +289,6 @@ fun PlaylistItem(playlist: Playlist, storageRef: StorageReference, onPlaylistCli
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
-@Composable
-fun <Context> showPlaylistDetailsDialog(context: Context, playlist: Playlist, onDismiss: () -> Unit) {
-    var editedName by remember { mutableStateOf(playlist.name) }
-    OutlinedTextField(
-        value = editedName,
-        onValueChange = { editedName = it },
-        label = { Text("Name") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
-    )
-    AlertDialog(
-        onDismissRequest = {
-            onDismiss.invoke()
-        },
-        title = {
-            Text(text = "Playlist Details")
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                // Display playlist details
-                Text("Name: ${playlist.name}")
-                Text("Description: ${playlist.description}")
-                Text("Date: ${playlist.date}")
-                Text("Location: ${playlist.location}")
-                // Add more details as needed
-            }
-        },
-        // TODO: implement Save Playlist Edit button
-        confirmButton = {
-            /*
-            Button(
-                onClick = {
-                    // Save the edited name to Firebase or perform any other necessary action
-                    val updatedPlaylist = playlist.copy(name = editedName)
-                    saveEditedPlaylistToFirebase(updatedPlaylist)
-
-                    onDismiss.invoke()
-                }
-            ) {
-                Text(text = "Save")
-            }*/
-
-
-        },
-    )
-}
 
 @Composable
 fun Column(modifier: Modifier, content: () -> Unit) {
@@ -481,30 +418,4 @@ private fun savePlaylistToFirebase(playlist: Playlist) {
     playlistsRef.child(playlistKey).setValue(playlist)
 }
 
-/*
-private fun saveEditedPlaylistToFirebase(playlist: Playlist) {
-    val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
-    val playlistsRef = database.getReference("Playlists")
 
-    val query = playlistsRef.orderByChild("name").equalTo(playlist.name)
-
-    query.addListenerForSingleValueEvent(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            for (childSnapshot in snapshot.children) {
-                val playlistKey = childSnapshot.key
-                if (playlistKey != null) {
-                    // Update the playlist details
-                    playlistsRef.child(playlistKey).setValue(playlist)
-                    return
-                }
-            }
-
-            // If no matching playlist is found, you can handle it accordingly
-            // For example, you can log an error or show a message to the user.
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            // Handle the error if the query is canceled
-        }
-    })
-}*/

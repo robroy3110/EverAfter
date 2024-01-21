@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -54,12 +56,14 @@ import com.google.firebase.database.database
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
+import java.io.Console
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSongsScreen(
     navController: NavController,
     playlistViewModel: PlaylistViewModel,
+    playlistName: String,
     modifier: Modifier = Modifier
 ) {
     // Initialize Firebase Storage
@@ -73,8 +77,8 @@ fun AddSongsScreen(
         availableSongs.value = songs
     }
 
-    // Currently playing song
-    var currentlyPlayingSong by remember { mutableStateOf<Song?>(null) }
+    // State to keep track of selected songs
+    var selectedSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
 
     // State to keep track of selected item index
     var selectedItemIndex by remember { mutableStateOf(-1) }
@@ -102,8 +106,24 @@ fun AddSongsScreen(
                     )
                 }
             },
+
         )
-        // Display the list of available songs
+        // Button to add selected songs to the playlist
+        Button(
+            onClick = {
+                // Add selected songs to the playlist
+                println("Musicas adicionadas sao: "+selectedSongs)
+                playlistViewModel.addSongsToPlaylist(playlistName,selectedSongs)
+                // Navigate back to the previous screen
+                navController.popBackStack()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Add Selected Songs to Playlist")
+        }
+        // Display the list of available songs with checkboxes
         LazyColumn(state = rememberLazyListState()) {
             itemsIndexed(availableSongs.value) { index, song ->
                 SongItem(
@@ -111,28 +131,19 @@ fun AddSongsScreen(
                     song = song,
                     onItemClick = {
                         // Handle item click and update the selected item index
-                        selectedItemIndex = index
+                        selectedSongs = if (selectedSongs.contains(song)) {
+                            selectedSongs - song
+                        } else {
+                            selectedSongs + song
+                        }
                     },
-                    isPlaying = currentlyPlayingSong == song,
-                    onPlayClick = {
-                        // Start playing the song
-                        playlistViewModel.playSong(song)
-                        currentlyPlayingSong = song
-                    },
-                    onStopClick = {
-                        // Stop playing the song
-                        playlistViewModel.stopPlayback()
-                        currentlyPlayingSong = null
-                    },
+                    isChecked = selectedSongs.contains(song),
                     isClicked = index == selectedItemIndex
-                )
-                Divider(
-                    color = MaterialTheme.colorScheme.primary,
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
         }
+
+
     }
 }
 
@@ -207,19 +218,23 @@ fun SongImage(song: Song, storageRef: StorageReference) {
 fun SongItem(
     storageRef: StorageReference,
     song: Song,
-    onItemClick: (Song) -> Unit,
-    isPlaying: Boolean,
-    onPlayClick: () -> Unit,
-    onStopClick: () -> Unit,
+    onItemClick: () -> Unit,
+    isChecked: Boolean,
     isClicked: Boolean
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onItemClick.invoke(song) },
+            .clickable { onItemClick.invoke() },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Checkbox
+        Checkbox(
+            checked = isChecked,
+            onCheckedChange = null, // We handle the click in the row
+            modifier = Modifier.padding(end = 8.dp)
+        )
 
         // Display song image
         SongImage(song = song, storageRef = storageRef)
@@ -238,37 +253,6 @@ fun SongItem(
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
-        }
-
-        // Play Icon (conditionally displayed)
-        if (isClicked) {
-            IconButton(
-                onClick = { onPlayClick() },
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play",
-                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
-                )
-            }
-        }
-        // Stop Icon (conditionally displayed)
-        if (isClicked) {
-            IconButton(
-                onClick = { onStopClick() },
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Stop,
-                    contentDescription = "Stop",
-                    tint = if (isPlaying) Color(0xFF8C52FF) else Color.Gray
-                )
-            }
         }
     }
 }
