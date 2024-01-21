@@ -31,7 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EverAfter(gameNotificationService: NotificationService) {
+fun EverAfter(notificationService: NotificationService) {
     val context = LocalContext.current
 
     val listOfNavItems = listOf(
@@ -77,7 +77,7 @@ fun EverAfter(gameNotificationService: NotificationService) {
 
                 AppNavigation(
                     navController = navController,
-                    gameNotificationService = gameNotificationService
+                    notificationService = notificationService,
                 )
             }
         }
@@ -120,7 +120,7 @@ fun EverAfter(gameNotificationService: NotificationService) {
                     .padding(it)
             ) {
 
-                AppNavigation(navController = navController, gameNotificationService)
+                AppNavigation(navController = navController, notificationService)
             }
         }
     }
