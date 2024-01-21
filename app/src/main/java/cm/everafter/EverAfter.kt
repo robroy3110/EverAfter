@@ -28,11 +28,10 @@ import cm.everafter.navigation.NavItem
 import cm.everafter.navigation.Screens
 
 import androidx.navigation.compose.currentBackStackEntryAsState
-import cm.everafter.screens.playlist.initializeSongs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EverAfter() {
+fun EverAfter(gameNotificationService: GameNotificationService) {
     val context = LocalContext.current
 
     val listOfNavItems = listOf(
@@ -76,7 +75,10 @@ fun EverAfter() {
                     .padding(it)
             ) {
 
-                AppNavigation(navController = navController)
+                AppNavigation(
+                    navController = navController,
+                    gameNotificationService = gameNotificationService
+                )
             }
         }
     } else {
@@ -118,16 +120,12 @@ fun EverAfter() {
                     .padding(it)
             ) {
 
-                AppNavigation(navController = navController)
+                AppNavigation(navController = navController, gameNotificationService)
             }
         }
     }
 
 }
 
-@Composable
-fun EverAfterBottomBar() {
-
-}
 
 

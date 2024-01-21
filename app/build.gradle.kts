@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "cm.everafter"
-        minSdk = 26
+        minSdk = 33
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -59,7 +59,7 @@ dependencies {
 
     implementation ("androidx.compose.material3:material3:1.1.0")
     implementation ("androidx.activity:activity-compose:1.3.1")
-    implementation ("com.google.accompanist:accompanist-permissions:0.21.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
     implementation("io.coil-kt:coil-compose:2.5.0")
 
@@ -112,8 +112,6 @@ dependencies {
     implementation ("androidx.camera:camera-view:${camerax_version}")
     implementation ("androidx.camera:camera-extensions:${camerax_version}")
     implementation ("androidx.camera:camera-mlkit-vision:1.4.0-alpha03")
-
-    implementation ("com.google.accompanist:accompanist-permissions:0.31.1-alpha")
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
