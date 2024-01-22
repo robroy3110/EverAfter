@@ -597,26 +597,42 @@ fun HomeScreenRelation(
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Daily Quests",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp), // Adapte as margens conforme necessário
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Text à esquerda
+                    Text(
+                        text = "Goals of the year",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+
+                    // Text à direita
+                    Text(
+                        text = "${relationShip!!.pointsTotal} total points",
+                        fontSize = 15.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             item {
-                Text("Dates")
+                Text(modifier = Modifier.padding(start = 16.dp), text = "Dates", fontWeight = FontWeight.Bold,)
                 RelationshipProgressBar(relationShip!!.pointsDate, "Dates")
 
-                Text("Music")
+                Text(modifier = Modifier.padding(start = 16.dp), text = "Music", fontWeight = FontWeight.Bold,)
                 RelationshipProgressBar(relationShip!!.pointsMusic, "Music")
 
-                Text("Gaming")
+                Text(modifier = Modifier.padding(start = 16.dp), text = "Gaming", fontWeight = FontWeight.Bold,)
                 RelationshipProgressBar(relationShip!!.pointsGames, "Gaming")
 
-                Text("Pictures")
+                Text(modifier = Modifier.padding(start = 16.dp), text = "Pictures", fontWeight = FontWeight.Bold,)
                 RelationshipProgressBar(relationShip!!.pointsPictures, "Pictures")
             }
         }
@@ -882,7 +898,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 .height(4.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Couple pics Section
         Row(
