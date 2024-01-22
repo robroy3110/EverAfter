@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -159,7 +160,7 @@ fun PlayListScreen(
             if (userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
                 // Display the "couple.png" image along with the message
                 Image(
-                    painter = painterResource(id = R.drawable.couple), // Replace R.drawable.couple with your actual resource ID
+                    painter = painterResource(id = R.drawable.couple1), // Replace R.drawable.couple1 with your actual resource ID
                     contentDescription = null,
                     modifier = Modifier
                         .size(150.dp)
@@ -167,12 +168,43 @@ fun PlayListScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "First join a relationship to create a shared playlist with your partner",
+                    text = "Create your first Shared Playlist!",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = Color.Gray,
                     modifier = Modifier.padding(start = 8.dp)
                 )
+            }
+        }
+
+        // Check if there are playlists associated with the user's relationship otherwise show special msg
+        if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty() && playlists.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "Create your first Shared Playlist!",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.couple1),
+                        contentDescription = null,
+                        modifier = Modifier.size(150.dp)
+                    )
+                }
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
