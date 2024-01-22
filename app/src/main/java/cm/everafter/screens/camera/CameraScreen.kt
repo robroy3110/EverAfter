@@ -60,11 +60,14 @@ import android.location.Geocoder
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
+import cm.everafter.screens.games.db
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
@@ -73,6 +76,8 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.tasks.await
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -96,6 +101,25 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
     Scaffold(
         Modifier.fillMaxSize(),
         floatingActionButton = {
+
+            var pointsPictures by remember { mutableStateOf(0) }
+
+            LaunchedEffect(Unit) {
+                var picturesPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsPictures").get().await()
+
+                // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+                if (picturesPointsSnapshot.exists()) {
+                    // Obtém a pontuação dos jogos como uma string
+                    val picturePointsString = picturesPointsSnapshot.value.toString()
+                    // Converte a string para um inteiro (assumindo que a string representa um número)
+                    pointsPictures = picturePointsString.toIntOrNull() ?: 0
+                } else {
+                    // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+                    pointsPictures = 0
+                }
+            }
+
+
             ExtendedFloatingActionButton(
                 text = { Text("Take Photo") },
                 icon = {Icon(imageVector = Icons.Default.Camera, contentDescription = "Camera capture icon")},
@@ -143,6 +167,13 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                                 StorageMetadata.Builder().setCustomMetadata("Coordinates","$latitude, $longitude").setCustomMetadata("Location","$city, $country").build())
 
                             cameraViewModel.storePhoto(bitmapImage)
+
+                            pointsPictures += 7
+                            // Atualizar a pontuação no banco de dados, se necessário
+                            db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsPictures").setValue(pointsPictures)
+
+                            // Mostrar um Toast informando sobre a ação
+                            Toast.makeText(context, "You both won 7 for taking a picture", Toast.LENGTH_SHORT).show()
 
                             image.close()
                         }

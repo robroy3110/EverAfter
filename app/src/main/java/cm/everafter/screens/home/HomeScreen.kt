@@ -608,7 +608,7 @@ fun HomeScreenRelation(
                 RelationshipProgressBar(relationShip!!.pointsDate, "Dates")
 
                 Text("Music")
-                RelationshipProgressBar(250, "Music")
+                RelationshipProgressBar(relationShip!!.pointsMusic, "Music")
 
                 Text("Gaming")
                 RelationshipProgressBar(relationShip!!.pointsGames, "Gaming")
