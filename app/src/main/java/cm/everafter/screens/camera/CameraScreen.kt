@@ -55,14 +55,25 @@ import java.util.Locale
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.ktx.storage
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewModel: UserViewModel){
@@ -74,6 +85,14 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
     val lastCapturedPhoto : Bitmap? = cameraState.capturedImage
     val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
     val storageRef = storage.reference
+    var latitude by remember { mutableDoubleStateOf(0.0) }
+    var longitude by remember { mutableDoubleStateOf(0.0) }
+    var addresses by remember {mutableStateOf<List<Address>?>(mutableListOf())}
+    var country by remember { mutableStateOf<String?>("Not Found") }
+    var city by remember {mutableStateOf<String?>("Not Found")}
+
+    val fineLocationPermissionState: PermissionState = rememberPermissionState(permission = Manifest.permission.ACCESS_FINE_LOCATION)
+    val geocoder: Geocoder = Geocoder(context,Locale.getDefault())
     Scaffold(
         Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -86,26 +105,17 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
 
                     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-                    if(ActivityCompat.checkSelfPermission(context,
-                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                        var location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-
+                    if((ActivityCompat.checkSelfPermission(context,
+                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) || fineLocationPermissionState.status.isGranted){
+                        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                         if(location != null){
-                            val latitude = location.latitude
-                            val longitude = location.longitude
-
-                            val metadata = ImageCapture.Metadata().apply {
-                                location = Location("gps").apply{
-                                    this.latitude = latitude
-                                    this.longitude = longitude
-                                }
-                            }
+                            latitude = location.latitude
+                            longitude = location.longitude
+                            addresses = geocoder.getFromLocation(latitude,longitude,5)
+                            city = addresses?.get(0)?.locality
+                            country = addresses?.get(0)?.countryName
                         }
-
                     }
-
-
-
 
                     cameraController.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback(){
 
@@ -121,13 +131,17 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                             val currentDateAndTime = sdf.format(Date())
 
                             val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${currentDateAndTime}/idk")
-                            riversRef.putBytes(imageBytes)
+
+                            riversRef.putBytes(imageBytes,
+                                StorageMetadata.Builder().setCustomMetadata("Coordinates","$latitude, $longitude").setCustomMetadata("Location","$city, $country").build())
 
                             cameraViewModel.storePhoto(bitmapImage)
 
                             image.close()
                         }
-                    })})
+                    })
+
+                    })
         }
 
     ) {  paddingValues: PaddingValues ->

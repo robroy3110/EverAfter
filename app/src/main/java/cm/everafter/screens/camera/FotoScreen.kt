@@ -21,15 +21,16 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 @Composable
 fun FotoScreen(userViewModel: UserViewModel){
     val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
-    CheckPermission(hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest,userViewModel)
+    val fineLocationPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.ACCESS_FINE_LOCATION)
+    CheckPermission(hasCameraPermission = cameraPermissionState.status.isGranted,cameraPermissionState::launchPermissionRequest,hasFineLocationPermission = fineLocationPermissionState.status.isGranted,fineLocationPermissionState::launchPermissionRequest,userViewModel)
 }
 
 @Composable
-fun CheckPermission(hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit,userViewModel: UserViewModel){
-    if(hasCameraPermission){
+fun CheckPermission(hasCameraPermission: Boolean,onRequestCameraPermission: () -> Unit,hasFineLocationPermission: Boolean,onRequestFineLocationPermission: () -> Unit,userViewModel: UserViewModel){
+    if(hasCameraPermission && hasFineLocationPermission){
         CameraScreen(userViewModel = userViewModel)
     }else{
-        NoPermissionScreen(onRequestCameraPermission)
+        NoPermissionScreen(onRequestCameraPermission,onRequestFineLocationPermission)
     }
 
 }
