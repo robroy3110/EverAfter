@@ -564,7 +564,10 @@ fun HomeScreenRelation(
                 Text(
                     text = relationShip!!.date,
                     modifier = Modifier
-                        .padding(top = 8.dp,start= 150.dp).clickable { showDialogChangeDate = true } // Adjusted padding as needed
+                        .padding(top = 8.dp, start = 140.dp)
+                        .clickable { showDialogChangeDate = true }, // Adjusted padding as needed
+                    fontWeight = FontWeight.Bold, // Torna o texto em negrito
+                    fontSize = 18.sp // Define o tamanho da fonte para 18 sp (ajuste conforme necessário)
                 )
             }
 
