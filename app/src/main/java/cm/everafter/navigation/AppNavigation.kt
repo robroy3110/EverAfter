@@ -47,7 +47,7 @@ fun AppNavigation(
             ProfileScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.GamesScreen.route){
-            GamesScreen(navController = navController, notificationService)
+            GamesScreen(navController = navController, notificationService, viewModel = userViewModel)
         }
         composable(route = Screens.PlaylistScreen.route){
             PlayListScreen(navController = navController, userViewModel = userViewModel)
