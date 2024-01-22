@@ -1,6 +1,8 @@
 package cm.everafter.screens.memories
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.widget.CalendarView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,12 +24,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import cm.everafter.classes.Perfil
+import cm.everafter.classes.RelationShip
+import cm.everafter.classes.User
+import cm.everafter.screens.home.db
+import cm.everafter.screens.home.getUserDataFromFirebaseWithImage
+import cm.everafter.screens.home.storageRef
+import cm.everafter.viewModels.UserViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.tasks.await
 
 sealed class MemoriesView {
     object CalendarPhotoView : MemoriesView()
@@ -38,6 +49,7 @@ sealed class MemoriesView {
 @Composable
 fun MemoriesScreen(
     navController: NavController,
+    viewModel: UserViewModel,
     modifier: Modifier = Modifier
 ) {
     var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.CalendarPhotoView) }
@@ -82,7 +94,7 @@ fun MemoriesScreen(
                 PhotoGridView(paddingValues)
             }
             is MemoriesView.MapView -> {
-                MapView(paddingValues)
+                MapView(paddingValues,viewModel.loggedInUser!!.relationship)
             }
         }
     }
@@ -176,47 +188,58 @@ fun PhotoGridView(paddingValues: PaddingValues) {
 }
 
 @Composable
-fun MapView(paddingValues: PaddingValues) {
+fun MapView(paddingValues: PaddingValues,relationShip: String) {
     var mapView: MapView? = null
+    var fotosLocations by remember { mutableStateOf<List<Pair<LatLng,String>>?>(mutableListOf())}
+    LaunchedEffect(Unit) {
+        fotosLocations = getFotosLocations(relationShip)
 
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { context ->
-            mapView = MapView(context)
-            mapView!!
-        },
-        update = { mapView ->
-            // Configurações adicionais podem ser feitas aqui
-            mapView?.onCreate(Bundle())
-            mapView?.getMapAsync { googleMap ->
-                // Configurações adicionais do mapa
-                onMapReady(googleMap)
-            }
+    }
+    fotosLocations?.let {
+        if(fotosLocations!!.isNotEmpty()) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context ->
+                    mapView = MapView(context)
+                    mapView!!
+                },
+                update = { mapView ->
+                    // Configurações adicionais podem ser feitas aqui
+                    mapView?.onCreate(Bundle())
+                    mapView?.getMapAsync { googleMap ->
+                        // Configurações adicionais do mapa
+                        onMapReady(googleMap, fotosLocations!!)
+                    }
+                }
+            )
         }
-    )
+    }
 }
 
-fun onMapReady(googleMap: GoogleMap) {
+fun onMapReady(googleMap: GoogleMap, fotosLocations: List<Pair<LatLng,String>>) {
     // Configurações adicionais do mapa após a inicialização
 
     // Posição de Lisboa, Portugal
-    val coordenadasLisboa = LatLng(38.7223, -9.1393)
+        for (location in fotosLocations) {
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(location.first)
+                    .title(location.second)
+            )
 
-    // Adicione um marcador em Lisboa
-    googleMap.addMarker(
-        MarkerOptions()
-            .position(coordenadasLisboa)
-            .title("Lisboa, Portugal")
-    )
+        }
 
-    // Configuração da posição e zoom
-    val cameraPosition = CameraPosition.Builder()
-        .target(coordenadasLisboa) // Define o centro do mapa na posição de Lisboa
-        .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
-        .build()
+        // Adicione um marcador em Lisboa
 
-    // Mova a câmera para a posição e zoom desejados
-    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+        // Configuração da posição e zoom
+        val cameraPosition = CameraPosition.Builder()
+            .target(fotosLocations[0].first) // Define o centro do mapa na posição de Lisboa
+            .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
+            .build()
+
+        // Mova a câmera para a posição e zoom desejados
+        googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 }
 
 fun getMonthByNumber(month: Int) : String{
@@ -258,5 +281,31 @@ fun getMonthByNumber(month: Int) : String{
             return "Dec"
         }
     }
+}
+
+suspend fun getFotosLocations(relationShip:String): List<Pair<LatLng,String>> {
+    val fotosLocations = mutableListOf<Pair<LatLng,String>>()
+
+    val ref = storageRef.child("Memories/${relationShip}")
+
+
+    val fotosRef = ref.listAll().await()
+
+    for(foto in fotosRef.items){
+        val fotoMetadata = foto.metadata.await()
+        val coordinatesString = fotoMetadata.getCustomMetadata("Coordinates")
+        val coordinates = coordinatesString!!.split(", ")
+        val location = fotoMetadata.getCustomMetadata("Location")
+        if(location != null){
+            Log.i("TSES","${Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),location)}")
+            fotosLocations.add(Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),location))
+        }else{
+            fotosLocations.add(Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),"Location Not Found"))
+        }
+
+    }
+
+
+    return fotosLocations
 }
 

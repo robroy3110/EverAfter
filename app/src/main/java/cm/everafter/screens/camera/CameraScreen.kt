@@ -130,7 +130,14 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                             val sdf = getDateInstance()
                             val currentDateAndTime = sdf.format(Date())
 
-                            val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${currentDateAndTime}/idk")
+                            if(city == null){
+                                city = "Not Found"
+                            }
+                            if(country == null){
+                                country = "Not Found"
+                            }
+
+                            val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${System.currentTimeMillis()}")
 
                             riversRef.putBytes(imageBytes,
                                 StorageMetadata.Builder().setCustomMetadata("Coordinates","$latitude, $longitude").setCustomMetadata("Location","$city, $country").build())
