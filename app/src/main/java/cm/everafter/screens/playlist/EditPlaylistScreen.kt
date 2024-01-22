@@ -1,6 +1,7 @@
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,14 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,34 +33,31 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cm.everafter.classes.Playlist
 import cm.everafter.classes.Song
-import cm.everafter.navigation.Screens
-import cm.everafter.screens.playlist.SongDetailsItem
 import cm.everafter.screens.playlist.SongImage
-import cm.everafter.screens.playlist.SongItem
 import cm.everafter.viewModels.PlaylistViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
-import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +73,20 @@ fun EditPlaylistScreen(
 
     // State to keep track of selected item index
     var selectedItemIndex by remember { mutableStateOf(-1) }
+    // Initialize state for handling image selection
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Create an ActivityResultLauncher for image selection
+    val getContent =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                selectedImageUri = it
+            }
+        }
+    // Launch the gallery for image selection
+    fun chooseImage() {
+        getContent.launch("image/*")
+    }
 
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
@@ -100,7 +112,7 @@ fun EditPlaylistScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // AppBar with back and edit buttons
+        // AppBar with back button
         TopAppBar(
             title = { /* You can add a title here if needed */ },
             navigationIcon = {
@@ -120,7 +132,7 @@ fun EditPlaylistScreen(
 
         )
 
-        // Center only the image, playlist name, location, and date
+        // ---------------------- image, playlist name, and date------------------------------
         playlistDetails?.let {
             androidx.compose.foundation.layout.Column(
                 modifier = Modifier
@@ -129,16 +141,28 @@ fun EditPlaylistScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Display the playlist image
-                PlaylistImage(playlist = playlistDetails, storageRef = storageRef)
+                ClickablePlaylistImage(
+                    playlist = playlistDetails,
+                    storageRef = storageRef,
+                    selectedImageUri = selectedImageUri,
+                    onImageClick = {
+                        chooseImage()
+                    }
+                )
+
                 // Playlist name
-                if (playlistName != null) {
-                    Text(
-                        text = playlistName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
+                EditablePlaylistName(
+                    playlistName = playlistName,
+                    onNameClick = {
+                        // Handle playlist name click (you can add the logic to edit the name)
+                    },
+                    onSaveClick = { newPlaylistName ->
+                        // Handle saving the new playlist name to the database
+                        if (playlistName != null) {
+                            playlistViewModel.updatePlaylistName(playlistName, newPlaylistName)
+                        }
+                    }
+                )
 
                 // Playlist Location and Date
                 val date = " ${it.date}"
@@ -157,7 +181,7 @@ fun EditPlaylistScreen(
                 .height(1.dp)
                 .background(Color(0xFF8C52FF))
         )
-        // Section: Songs
+        //---------------------------- Songs ----------------------------------
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,11 +215,7 @@ fun EditPlaylistScreen(
                             playlistViewModel.deleteSongFromPlaylist(playlistName ?: "", song)
                         }
                     )
-
-
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Additional content related to each song, if needed
                 }
             }
         }
@@ -303,6 +323,103 @@ fun DeletableSongItem(
     }
 }
 
+@Composable
+fun ClickablePlaylistImage(
+    playlist: Playlist,
+    storageRef: StorageReference,
+    selectedImageUri: Uri?,
+    onImageClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clickable {
+                onImageClick()
+            }
+            .fillMaxWidth()
+    ) {
+        // Display the playlist image
+        PlaylistImage(playlist = playlist, storageRef = storageRef)
+
+        // Show the "Add Image" button if no image is present
+        if (selectedImageUri == null && playlist.imageUri.isEmpty()) {
+            IconButton(
+                onClick = {
+                    onImageClick()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Photo,
+                    contentDescription = "Add Image",
+                    tint = Color(0xFF8C52FF)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EditablePlaylistName(
+    playlistName: String?,
+    onNameClick: () -> Unit,
+    onSaveClick: (String) -> Unit
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var newPlaylistName by remember { mutableStateOf(playlistName ?: "") }
+
+    if (isEditing) {
+        // Editable text field when in editing mode
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            OutlinedTextField(
+                value = newPlaylistName,
+                onValueChange = { newPlaylistName = it },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        isEditing = false
+                        onSaveClick(newPlaylistName)
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Confirm button to save the changes
+            Button(
+                onClick = {
+                    isEditing = false
+                    onSaveClick(newPlaylistName)
+                }
+            ) {
+                Text(text = "Save")
+            }
+        }
+    } else {
+        // Clickable text when not in editing mode
+        ClickableText(
+            text = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append(newPlaylistName)
+                }
+            },
+            onClick = {
+                onNameClick()
+                isEditing = true
+            },
+            modifier = Modifier.padding(vertical = 8.dp),
+            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        )
+    }
+}
 
 
 

@@ -1,19 +1,16 @@
 package cm.everafter.viewModels
 
-import androidx.lifecycle.ViewModel
-
 import android.media.MediaPlayer
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.ViewModel
 import cm.everafter.classes.Playlist
-
 import cm.everafter.classes.Song
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -271,4 +268,36 @@ class PlaylistViewModel : ViewModel() {
         })
     }
 
+    // Inside PlaylistViewModel class
+    fun updatePlaylistName(playlistName: String, newPlaylistName: String) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        // Query to get the playlist with the specified name
+        val query = playlistsRef.orderByChild("name").equalTo(playlistName)
+
+        // Fetch data from Firebase using the query
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // Iterate through the dataSnapshot to get the playlist
+                    for (playlistSnapshot in snapshot.children) {
+                        // Update the playlist name
+                        playlistsRef.child(playlistSnapshot.key ?: "").child("name").setValue(newPlaylistName)
+
+                        // Update the playlist state
+                        _playlistState.value = _playlistState.value?.copy(name = newPlaylistName)
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error if the query is canceled
+                println("Couldn't update the Playlist name in Firebase for some reason...")
+            }
+        })
+    }
+
 }
+
+
