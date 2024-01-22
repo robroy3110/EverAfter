@@ -1,6 +1,7 @@
 package cm.everafter.screens.playlist
 
 import PlaylistImage
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -46,9 +47,25 @@ import cm.everafter.viewModels.PlaylistViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import cm.everafter.NotificationService
+import cm.everafter.classes.Perfil
+import cm.everafter.classes.RelationShip
+import cm.everafter.screens.home.auth
+import cm.everafter.viewModels.UserViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
+import com.google.firebase.database.getValue
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
+import kotlinx.coroutines.tasks.await
+
+val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +73,8 @@ fun PlaylistDetailsScreen(
     navController: NavController,
     playlistViewModel: PlaylistViewModel,
     playlistName: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userViewModel: UserViewModel
 ) {
     // Initialize Firebase Storage
     val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
@@ -70,6 +88,79 @@ fun PlaylistDetailsScreen(
 
     // Observe changes to the playlistState
     val playlistState by playlistViewModel.playlistState.collectAsState()
+
+    var otheruser by remember { mutableStateOf("") }
+    var relationShip by remember { mutableStateOf<RelationShip?>(null) }
+
+    val notificationService = NotificationService(LocalContext.current)
+
+    LaunchedEffect(Unit) {
+
+        val relationshipRef =
+            db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).get()
+                .await()
+        if (relationshipRef.exists()) {
+            relationShip = relationshipRef.getValue(RelationShip::class.java)
+            otheruser = ""
+            otheruser = if (relationShip?.user1!! != auth.currentUser!!.uid) {
+                "1" + relationShip?.user1!!
+            } else {
+                "2" + relationShip?.user2!!
+            }
+        }
+    }
+
+    if(otheruser[0] == '1') {
+        DisposableEffect(relationShip?.lastsongplayed2) {
+            val relationRef = db.reference.child("Relationship").child(userViewModel.loggedInUser!!.relationship)
+            val listener = object : ValueEventListener {
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+
+                    notificationService.showNewSongPlayedNotification(currentlyPlayingSong!!.name)
+
+                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                    relationShip = updatedRelation
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error observing user data: ${error.message}")
+                }
+            }
+
+            relationRef.addValueEventListener(listener)
+            // Remove the listener when the composable is disposed
+            onDispose {
+                relationRef.removeEventListener(listener)
+            }
+
+        }
+    } else {
+        DisposableEffect(relationShip?.lastsongplayed1) {
+            val relationRef = db.reference.child("Relationship").child(userViewModel.loggedInUser!!.relationship)
+            val listener = object : ValueEventListener {
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+
+                    notificationService.showNewSongPlayedNotification(currentlyPlayingSong!!.name)
+
+                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                    relationShip = updatedRelation
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Error observing user data: ${error.message}")
+                }
+            }
+
+            relationRef.addValueEventListener(listener)
+            // Remove the listener when the composable is disposed
+            onDispose {
+                relationRef.removeEventListener(listener)
+            }
+
+        }
+    }
 
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
@@ -229,6 +320,13 @@ fun PlaylistDetailsScreen(
                         },
                         isPlaying = currentlyPlayingSong == song,
                         onPlayClick = {
+
+                            if(otheruser[0] == '1') {
+                                db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed2").setValue(song.name)
+                            } else {
+                                db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed1").setValue(song.name)
+                            }
+
                             // Start playing the song
                             playlistViewModel.playSong(song)
                             currentlyPlayingSong = song

@@ -24,11 +24,11 @@ class CheckFreeGamesWorker(appContext: Context, workerParams: WorkerParameters) 
             // Transforme o snapshot em uma lista de jogos
             val games = gamesSnapshot.children.mapNotNull { it.getValue(Game::class.java) }
             // Verifique e notifique os novos jogos gratuitos
-            val gameNotificationService = NotificationService(applicationContext)
+            val notificationService = NotificationService(applicationContext)
 
             for (game in games) {
                 if (isGameFreeToday(game)) {
-                    gameNotificationService.showNewFreeGameNotification(game)
+                    notificationService.showNewFreeGameNotification(game)
                 }
             }
             return Result.success()

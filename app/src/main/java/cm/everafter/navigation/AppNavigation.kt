@@ -57,7 +57,8 @@ fun AppNavigation(
             PlaylistDetailsScreen(
                 navController = navController,
                 playlistViewModel = viewModel(),
-                playlistName = playlistName
+                playlistName = playlistName,
+                userViewModel = userViewModel
             )
         }
 

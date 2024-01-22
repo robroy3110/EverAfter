@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import cm.everafter.classes.Game
+import cm.everafter.classes.Song
 import kotlin.random.Random
 
 class NotificationService(
@@ -33,6 +34,21 @@ class NotificationService(
         val notification = NotificationCompat.Builder(context, "game_notification")
             .setContentTitle(game.title + " is now FREE!")
             .setContentText("Check this game out and play it together!")
+            .setSmallIcon(R.drawable.game_icon)
+            .setPriority(NotificationManager.IMPORTANCE_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(Random.nextInt(), notification)
+
+
+    }
+
+    fun showNewSongPlayedNotification(songName: String) {
+
+        val notification = NotificationCompat.Builder(context, "game_notification")
+            .setContentTitle("Your partner is listening to " + songName)
+            .setContentText("Go listen to it and gain points!")
             .setSmallIcon(R.drawable.game_icon)
             .setPriority(NotificationManager.IMPORTANCE_HIGH)
             .setAutoCancel(true)
