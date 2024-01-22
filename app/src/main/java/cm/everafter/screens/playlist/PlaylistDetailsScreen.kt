@@ -80,8 +80,6 @@ fun PlaylistDetailsScreen(
         }
     }
 
-
-
     // Print the playlistState when it changes
     LaunchedEffect(playlistState) {
         println("Playlist State: $playlistState")
@@ -148,30 +146,39 @@ fun PlaylistDetailsScreen(
             },
         )
 
-        // Center only the image, playlist name, location, and date
+        // Details of playlist's image, playlist name, and date
         playlistDetails?.let {
-            // Display the playlist image
-            PlaylistImage(playlist = playlistDetails, storageRef = storageRef)
-            // Playlist name
-            if (playlistName != null) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp), // Add horizontal padding
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Display the playlist image
+                PlaylistImage(playlist = playlistDetails, storageRef = storageRef)
+
+                // Playlist name
+                if (playlistName != null) {
+                    Text(
+                        text = playlistName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                // Playlist's Date
+                val date = "${it.date}"
                 Text(
-                    text = playlistName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    text = date,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
-
-            // Playlist Location and Date
-            val locationAndDate = "${it.location}, ${it.date}"
-            Text(
-                text = locationAndDate,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
         }
 
-        // Smooth Divider
+        // Divider
         Box(
             modifier = Modifier
                 .fillMaxWidth()

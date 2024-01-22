@@ -67,6 +67,8 @@ import com.google.firebase.database.database
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -328,12 +330,6 @@ fun Column(modifier: Modifier, content: () -> Unit) {
 
 }
 
-/*
-fun saveEditedPlaylistToFirebase(updatedPlaylist: Any) {
-    // TODO: saveEditedPlaylistToFirebase
-}
-*/
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -341,7 +337,7 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     var playlistName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("2023-12-01") }
+    var date by remember { mutableStateOf(getCurrentDate()) }
     var location by remember { mutableStateOf("Current Location") }
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -389,16 +385,7 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 )
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("location") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
             }
-            // TODO: showAddPlaylistDialog add a better location and date picking approach
         },
         confirmButton = {
             Button(
@@ -409,7 +396,6 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
                         name = playlistName,
                         description = description,
                         date = date,
-                        location = location,
                         imageUri = "",
                         songs = emptyList()
                     )
@@ -439,6 +425,12 @@ fun showAddPlaylistDialog(userViewModel: UserViewModel, onDismiss: () -> Unit) {
     )
 }
 
+// Function to get the current date in the required format
+private fun getCurrentDate(): String {
+    val currentDate = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    return currentDate.format(formatter)
+}
 
 private fun savePlaylistToFirebase(playlist: Playlist) {
     val database =Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")

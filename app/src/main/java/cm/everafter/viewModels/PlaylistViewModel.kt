@@ -207,7 +207,7 @@ class PlaylistViewModel : ViewModel() {
     }
 
 
-    fun saveEditedPlaylistToFirebase(playlist: Playlist) {
+/*    fun saveEditedPlaylistToFirebase(playlist: Playlist) {
         val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
         val playlistsRef = database.getReference("Playlists")
 
@@ -230,6 +230,43 @@ class PlaylistViewModel : ViewModel() {
 
             override fun onCancelled(error: DatabaseError) {
                 // Handle the error if the query is canceled
+            }
+        })
+    }*/
+
+    fun deleteSongFromPlaylist(playlistName: String, song: Song) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        // Query to get the playlist with the specified name
+        val query = playlistsRef.orderByChild("name").equalTo(playlistName)
+
+        // Fetch data from Firebase using the query
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // Iterate through the dataSnapshot to get the playlist
+                    for (playlistSnapshot in snapshot.children) {
+                        val playlist = playlistSnapshot.getValue(Playlist::class.java)
+
+                        playlist?.let {
+                            // Filter out the song to be deleted
+                            val updatedSongs = it.songs?.filter { it.name != song.name } ?: emptyList()
+
+                            // Update the playlist by removing the song
+                            playlistsRef.child(playlistSnapshot.key ?: "").child("songs").setValue(updatedSongs)
+                            _playlistState.value = it.copy(songs = updatedSongs)
+                        }
+
+                        // Assuming there's only one playlist with the given name
+                        break
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error
+                println("Couldn't get the Playlist from Firebase for some reason...")
             }
         })
     }

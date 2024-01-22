@@ -122,25 +122,32 @@ fun EditPlaylistScreen(
 
         // Center only the image, playlist name, location, and date
         playlistDetails?.let {
-            // Display the playlist image
-            PlaylistImage(playlist = playlistDetails, storageRef = storageRef)
-            // Playlist name
-            if (playlistName != null) {
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp), // Add horizontal padding
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Display the playlist image
+                PlaylistImage(playlist = playlistDetails, storageRef = storageRef)
+                // Playlist name
+                if (playlistName != null) {
+                    Text(
+                        text = playlistName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                // Playlist Location and Date
+                val date = " ${it.date}"
                 Text(
-                    text = playlistName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    text = date,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
-
-            // Playlist Location and Date
-            val locationAndDate = "${it.location}, ${it.date}"
-            Text(
-                text = locationAndDate,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
         }
 
         // Smooth Divider
@@ -171,16 +178,20 @@ fun EditPlaylistScreen(
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
                 itemsIndexed(songs) { index, song ->
-                    // Assuming you have a SongDetailsItem composable for displaying song details
+
                     DeletableSongItem(
                         storageRef = storageRef,
                         song = song,
                         onItemClick = {
                             // Handle item click and update the selected item index
                             selectedItemIndex = index
-                            //TODO: call Delete Song From playlist function
                         },
+                        onDeleteClick = {
+                            // Call the delete function in the ViewModel
+                            playlistViewModel.deleteSongFromPlaylist(playlistName ?: "", song)
+                        }
                     )
+
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -196,7 +207,8 @@ fun EditPlaylistScreen(
 fun DeletableSongItem(
     storageRef: StorageReference,
     song: Song,
-    onItemClick: () -> Unit
+    onItemClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
@@ -207,46 +219,92 @@ fun DeletableSongItem(
             .clickable { onItemClick.invoke() },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // TODO: Edit Playlist's image by getting it from the Phone's gallery
+        // TODO: Default playlist image as the first added song only works for a few songs
+        // TODO: Remove Blank Space On top of Screens
         // Display song image
         SongImage(song = song, storageRef = storageRef)
 
-        Spacer(modifier = Modifier.width(8.dp))
-
         // Column for song name and artist
-        Box(
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier.weight(1f)
         ) {
-            // Column for song name and artist
-            androidx.compose.foundation.layout.Column {
-                // Song name
-                Text(text = song.name, fontSize = 16.sp)
+            // TODO: Being able to edit Playlist's name
+            // Song name
+            Text(text = song.name, fontSize = 16.sp)
 
-                // Song artist
-                Text(
-                    text = song.artist,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
-
-        // Delete Icon
-        IconButton(
-            onClick = {  },
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .size(24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete",
-                tint = Color(0xFF8C52FF)
+            // Song artist
+            Text(
+                text = song.artist,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
 
+        // Spacer to push the delete icon to the right side
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Delete Icon wrapped in a Box to ensure proper alignment
+        Box(
+            modifier = Modifier.align(Alignment.CenterVertically)
+        ) {
+            IconButton(
+                onClick = {
+                    // Show the delete confirmation dialog or directly delete the song
+                    isDeleteDialogVisible = true
+                },
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color(0xFF8C52FF)
+                )
+            }
+        }
+    }
+
+    // Delete confirmation dialog
+    if (isDeleteDialogVisible) {
+        AlertDialog(
+            onDismissRequest = {
+                isDeleteDialogVisible = false
+            },
+            title = {
+                Text(text = "Delete Song")
+            },
+            text = {
+                Text(text = "Are you sure you want to delete this song from the playlist?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Call the delete function in the ViewModel
+                        onDeleteClick.invoke()
+                        isDeleteDialogVisible = false
+                    }
+                ) {
+                    Text(text = "Delete")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        isDeleteDialogVisible = false
+                    }
+                ) {
+                    Text(text = "Cancel")
+                }
+            }
+        )
     }
 }
+
+
+
 
 
 

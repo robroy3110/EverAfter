@@ -5,7 +5,6 @@ class Playlist(
     val name: String = "",
     val description: String = "",
     val date: String = "",
-    val location: String = "Default Location",
     val imageUri: String = "",
     val songs: List<Song> = emptyList()
 ){
@@ -15,10 +14,9 @@ class Playlist(
         name: String = this.name,
         description: String = this.description,
         date: String = this.date,
-        location: String = this.location,
         imageUri: String = this.imageUri,
         songs: List<Song>? = this.songs
     ): Playlist {
-        return Playlist(relationship, name, description, date, location, imageUri, songs ?: emptyList())
+        return Playlist(relationship, name, description, date, imageUri, songs ?: emptyList())
     }
 }
