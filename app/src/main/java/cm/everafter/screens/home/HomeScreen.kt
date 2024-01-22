@@ -1261,7 +1261,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                                                     "0-0-0",
                                                                     auth.currentUser!!.uid,
                                                                     i.id,
-                                                                    mutableListOf()
+                                                                    hashMapOf()
                                                                 )
                                                             )
 

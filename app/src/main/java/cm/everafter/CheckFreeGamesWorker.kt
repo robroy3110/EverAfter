@@ -18,7 +18,7 @@ class CheckFreeGamesWorker(appContext: Context, workerParams: WorkerParameters) 
     override suspend fun doWork(): Result {
         try {
             // Obtenha a lista de jogos
-            val gamesRef = db.getReference("Games")
+            val gamesRef = db.getReference("FreeGames")
             val gamesSnapshot = gamesRef.get().await()
 
             // Transforme o snapshot em uma lista de jogos
