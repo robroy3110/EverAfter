@@ -15,8 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
@@ -39,12 +41,12 @@ fun EverAfter(notificationService: NotificationService) {
     val listOfNavItems = listOf(
         NavItem(
             label = "Home",
-            icon = Icons.Default.Home,
+            icon = Icons.Filled.Favorite,
             route = Screens.HomeScreen.route
         ),
         NavItem(
             label = "Memories",
-            icon = Icons.Default.Favorite,
+            icon = Icons.Filled.Image,
             route = Screens.MemoriesScreen.route
         ),
         NavItem(
@@ -58,7 +60,7 @@ fun EverAfter(notificationService: NotificationService) {
             route = Screens.GamesScreen.route
         ),
         NavItem(
-            label = "Playlist",
+            label = "Playlists",
             icon = Icons.Filled.MusicNote,
             route = Screens.PlaylistScreen.route
         ),
