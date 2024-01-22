@@ -123,8 +123,6 @@ class PlaylistViewModel : ViewModel() {
         super.onCleared()
     }
 
-
-    // Function to add songs to the playlist
     fun addSongsToPlaylist(playlistName: String, songs: List<Song>) {
         // Ensure that there's a selected playlist
         if (playlistName.isEmpty()) {
@@ -147,8 +145,19 @@ class PlaylistViewModel : ViewModel() {
                         val playlist = playlistSnapshot.getValue(Playlist::class.java)
 
                         playlist?.let {
-                            // Update the playlist by adding new songs
                             val updatedSongs = (it.songs ?: emptyList()) + songs
+
+                            if (it.songs.isNullOrEmpty() && updatedSongs.isNotEmpty()) {
+                                // If the playlist was empty and now has songs, set the playlist image
+                                val firstSongImage = updatedSongs.firstOrNull()?.imageFileName
+                                if (!firstSongImage.isNullOrEmpty()) {
+                                    println("---------Song Picture added to Playlist!----")
+                                    playlistsRef.child(playlistSnapshot.key ?: "").child("imageUri").setValue(firstSongImage)
+                                    _playlistState.value = it.copy(imageUri = firstSongImage, songs = updatedSongs)
+                                }
+                            }
+
+                            // Update the playlist by adding new songs
                             playlistsRef.child(playlistSnapshot.key ?: "").child("songs").setValue(updatedSongs)
                             _playlistState.value = it.copy(songs = updatedSongs)
                         }
@@ -162,6 +171,37 @@ class PlaylistViewModel : ViewModel() {
             override fun onCancelled(error: DatabaseError) {
                 // Handle the error
                 println("Couldn't get the Playlist from Firebase for some reason...")
+            }
+        })
+    }
+
+
+    // Inside PlaylistViewModel class
+    fun deletePlaylist(playlistName: String) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        // Query to get the playlist with the specified name
+        val query = playlistsRef.orderByChild("name").equalTo(playlistName)
+
+        // Fetch data from Firebase using the query
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // Iterate through the dataSnapshot to get the playlist
+                    for (playlistSnapshot in snapshot.children) {
+                        // Remove the playlist from the database
+                        playlistsRef.child(playlistSnapshot.key ?: "").removeValue()
+
+                        // Clear the playlist state
+                        _playlistState.value = null
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error if the query is canceled
+                println("Couldn't delete the Playlist from Firebase for some reason...")
             }
         })
     }
@@ -193,4 +233,5 @@ class PlaylistViewModel : ViewModel() {
             }
         })
     }
+
 }

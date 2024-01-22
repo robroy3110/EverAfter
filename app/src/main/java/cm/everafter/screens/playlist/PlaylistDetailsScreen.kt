@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -67,6 +68,9 @@ fun PlaylistDetailsScreen(
     // State to keep track of selected item index
     var selectedItemIndex by remember { mutableStateOf(-1) }
 
+    // Observe changes to the playlistState
+    val playlistState by playlistViewModel.playlistState.collectAsState()
+
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
         println("----------------- Playlist Details Screen -----------------")
@@ -76,8 +80,7 @@ fun PlaylistDetailsScreen(
         }
     }
 
-    // Observe changes to the playlistState
-    val playlistState by playlistViewModel.playlistState.collectAsState()
+
 
     // Print the playlistState when it changes
     LaunchedEffect(playlistState) {
@@ -111,6 +114,25 @@ fun PlaylistDetailsScreen(
                 }
             },
             actions = {
+                // Delete IconButton
+                IconButton(
+                    onClick = {
+                        // Handle delete playlist action
+                        // You can show a confirmation dialog or directly perform the deletion
+                        // For simplicity, I'm calling a function that you can implement
+                        if (playlistName != null) {
+                            playlistViewModel.deletePlaylist(playlistName)
+                        }
+                        // Navigate back after deletion or perform any other action
+                        navController.popBackStack()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete, // Replace with the appropriate delete icon
+                        contentDescription = "Delete",
+                        tint = Color(0xFF8C52FF)
+                    )
+                }
                 // Edit IconButton
                 IconButton(
                     onClick = {
@@ -187,10 +209,6 @@ fun PlaylistDetailsScreen(
             }
         }
 
-// PlaylistDetailsScreen.kt
-
-// PlaylistDetailsScreen.kt
-
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
                 itemsIndexed(songs) { index, song ->
@@ -222,13 +240,8 @@ fun PlaylistDetailsScreen(
                 }
             }
         }
-
-
-
-
     }
 }
-
 
 @Composable
 fun SongDetailsItem(

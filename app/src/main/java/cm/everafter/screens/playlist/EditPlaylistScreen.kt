@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,6 +52,9 @@ import androidx.navigation.NavController
 import cm.everafter.classes.Playlist
 import cm.everafter.classes.Song
 import cm.everafter.navigation.Screens
+import cm.everafter.screens.playlist.SongDetailsItem
+import cm.everafter.screens.playlist.SongImage
+import cm.everafter.screens.playlist.SongItem
 import cm.everafter.viewModels.PlaylistViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.storage.StorageReference
@@ -67,10 +73,11 @@ fun EditPlaylistScreen(
     val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
     val storageRef = storage.reference
 
+    // State to keep track of selected item index
+    var selectedItemIndex by remember { mutableStateOf(-1) }
+
     // Trigger the effect when playlistName changes
     LaunchedEffect(playlistName) {
-        println("----------------- EDIT Playlist Details Screen -----------------")
-
         if (playlistName != null) {
             playlistViewModel.getPlaylist(playlistName)
         }
@@ -160,20 +167,86 @@ fun EditPlaylistScreen(
             )
         }
 
-/*        // Playlist's List of Songs
+        // Playlist's List of Songs
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
-                items(songs) { song ->
-                    cm.everafter.screens.playlist.SongItemOnDetailsScreen(song = song)
+                itemsIndexed(songs) { index, song ->
+                    // Assuming you have a SongDetailsItem composable for displaying song details
+                    DeletableSongItem(
+                        storageRef = storageRef,
+                        song = song,
+                        onItemClick = {
+                            // Handle item click and update the selected item index
+                            selectedItemIndex = index
+                            //TODO: call Delete Song From playlist function
+                        },
+                    )
+
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    // Additional content related to each song, if needed
                 }
             }
-        }*/
+        }
+
     }
 }
 
+@Composable
+fun DeletableSongItem(
+    storageRef: StorageReference,
+    song: Song,
+    onItemClick: () -> Unit
+) {
+    var isDeleteDialogVisible by remember { mutableStateOf(false) }
 
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { onItemClick.invoke() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Display song image
+        SongImage(song = song, storageRef = storageRef)
 
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Column for song name and artist
+        Box(
+            modifier = Modifier.weight(1f)
+        ) {
+            // Column for song name and artist
+            androidx.compose.foundation.layout.Column {
+                // Song name
+                Text(text = song.name, fontSize = 16.sp)
+
+                // Song artist
+                Text(
+                    text = song.artist,
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+
+        // Delete Icon
+        IconButton(
+            onClick = {  },
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .size(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete",
+                tint = Color(0xFF8C52FF)
+            )
+        }
+
+    }
+}
 
 
 

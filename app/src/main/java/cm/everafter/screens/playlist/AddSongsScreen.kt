@@ -142,8 +142,6 @@ fun AddSongsScreen(
                 )
             }
         }
-
-
     }
 }
 
