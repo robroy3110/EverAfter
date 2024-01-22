@@ -4,11 +4,20 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
 import android.widget.CalendarView
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
@@ -22,6 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import cm.everafter.classes.Perfil
@@ -31,13 +46,20 @@ import cm.everafter.screens.home.db
 import cm.everafter.screens.home.getUserDataFromFirebaseWithImage
 import cm.everafter.screens.home.storageRef
 import cm.everafter.viewModels.UserViewModel
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 sealed class MemoriesView {
     object CalendarPhotoView : MemoriesView()
@@ -91,7 +113,7 @@ fun MemoriesScreen(
                 CalendarPhotoView(paddingValues)
             }
             is MemoriesView.PhotoGridView -> {
-                PhotoGridView(paddingValues)
+                PhotoGridView(paddingValues, viewModel.loggedInUser!!.relationship)
             }
             is MemoriesView.MapView -> {
                 MapView(paddingValues,viewModel.loggedInUser!!.relationship)
@@ -114,7 +136,7 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
 
     ) {
         AndroidView(factory = { CalendarView(it) },
@@ -175,20 +197,85 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
 }
 */
 
+
 @Composable
-fun PhotoGridView(paddingValues: PaddingValues) {
-    Column(
+fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
+    var photosByDate by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+
+    val storageRef = storageRef.child("Memories/${relationShip}")
+
+    LaunchedEffect(storageRef) {
+        // Obter mapa de nomes e URLs das imagens do Firebase Storage
+        val photosWithNames = getImageUrlsWithNames(storageRef)
+
+        // Organizar fotos pelo timestamp (data)
+        val photosGroupedByDate = groupImagesByDate(photosWithNames.keys.toList())
+
+        // Preencher o mapa final com URLs organizados por data
+        photosByDate = photosGroupedByDate.mapValues { entry ->
+            val (_, imageNames) = entry
+            imageNames.mapNotNull { imageName ->
+                photosWithNames[imageName]
+            }
+        }
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
+            .padding(top = 100.dp, start = 16.dp, end = 16.dp)
     ) {
-        Text(text = "Photo Grid View")
-        // Conteúdo específico da grade de fotos aqui
+        photosByDate.entries.forEachIndexed { index, entry ->
+            val (date, photoList) = entry
+
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = formatDate(date),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                        color = Color.Black,  // Cor do texto
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            // Create rows with three images each
+            val rows = photoList.chunked(3)
+            rows.forEach { rowPhotos ->
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(4.dp)
+                    ) {
+                        rowPhotos.forEach { imageUrl ->
+                            Image(
+                                painter = rememberAsyncImagePainter(imageUrl),
+                                contentDescription = null,
+                                contentScale= ContentScale.FillBounds,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .clip(MaterialTheme.shapes.extraLarge)  // Adiciona bordas arredondadas
+                                    .padding(4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
+
+
 @Composable
-fun MapView(paddingValues: PaddingValues,relationShip: String) {
+fun MapView(paddingValues: PaddingValues, relationShip: String) {
     var mapView: MapView? = null
     var fotosLocations by remember { mutableStateOf<List<Pair<LatLng,String>>?>(mutableListOf())}
     LaunchedEffect(Unit) {
@@ -292,7 +379,9 @@ suspend fun getFotosLocations(relationShip:String): List<Pair<LatLng,String>> {
     val fotosRef = ref.listAll().await()
 
     for(foto in fotosRef.items){
+
         val fotoMetadata = foto.metadata.await()
+
         val coordinatesString = fotoMetadata.getCustomMetadata("Coordinates")
         val coordinates = coordinatesString!!.split(", ")
         val location = fotoMetadata.getCustomMetadata("Location")
@@ -308,4 +397,75 @@ suspend fun getFotosLocations(relationShip:String): List<Pair<LatLng,String>> {
 
     return fotosLocations
 }
+
+// Obter URLs das imagens do Firebase Storage
+suspend fun getImageUrls(storageRef: StorageReference): List<String> {
+    return try {
+        val result = storageRef.listAll().await()
+        result.items.map { it.downloadUrl.await().toString() }
+    } catch (e: Exception) {
+        emptyList()
+    }
+}
+
+suspend fun getImageUrlsWithNames(storageRef: StorageReference): Map<String, String> {
+    return try {
+        val result = storageRef.listAll().await()
+        result.items.associateByTo(HashMap()) { it.name }  // Chave: nome do StorageReference, Valor: URL
+            .mapValues { (_, storageReference) ->
+                storageReference.downloadUrl.await().toString()
+            }
+    } catch (e: Exception) {
+        emptyMap()
+    }
+}
+
+
+fun groupImagesByDate(imageNames: List<String>): Map<String, List<String>> {
+    return imageNames.groupBy { calculateDateFromImageName(it) }
+}
+
+
+// Extrair a data do URL
+fun calculateDateFromImageName(imageName: String): String {
+    val timestamp = imageName.toLongOrNull()
+    return if (timestamp != null) {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timestamp))
+        date
+    } else {
+        "Unknown Date"
+    }
+}
+
+
+// Função para formatar a data
+fun formatDate(date: String): String {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val parsedDate = dateFormat.parse(date)
+
+    parsedDate?.let {
+        val cal = Calendar.getInstance()
+        cal.time = parsedDate
+
+        val currentCal = Calendar.getInstance()
+
+        // Verifica se a data é hoje
+        if (cal.get(Calendar.YEAR) == currentCal.get(Calendar.YEAR) &&
+            cal.get(Calendar.MONTH) == currentCal.get(Calendar.MONTH) &&
+            cal.get(Calendar.DAY_OF_MONTH) == currentCal.get(Calendar.DAY_OF_MONTH)
+        ) {
+            return "Today"
+        }
+
+        val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
+        val month = getMonthByNumber(cal.get(Calendar.MONTH) + 1) // Adiciona 1 porque o mês no Calendar começa do zero
+        val year = cal.get(Calendar.YEAR)
+
+        return "$dayOfMonth $month, $year"
+    }
+
+    return "Unknown Date"
+}
+
+
 
