@@ -109,57 +109,63 @@ fun PlaylistDetailsScreen(
             }
         }
     }
+    relationShip?.let {
+            if (otheruser[0] == '1') {
+                DisposableEffect(relationShip?.lastsongplayed1) {
+                    val relationRef = db.reference.child("Relationships")
+                        .child(userViewModel.loggedInUser!!.relationship)
+                    val listener = object : ValueEventListener {
 
-    if(otheruser[0] == '1') {
-        DisposableEffect(relationShip?.lastsongplayed2) {
-            val relationRef = db.reference.child("Relationship").child(userViewModel.loggedInUser!!.relationship)
-            val listener = object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
 
-                override fun onDataChange(snapshot: DataSnapshot) {
 
-                    notificationService.showNewSongPlayedNotification(currentlyPlayingSong!!.name)
+                            val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                            relationShip = updatedRelation
 
-                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                    relationShip = updatedRelation
+                            notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed1)
+
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e("Firebase", "Error observing user data: ${error.message}")
+                        }
+                    }
+
+                    relationRef.addValueEventListener(listener)
+                    // Remove the listener when the composable is disposed
+                    onDispose {
+                        relationRef.removeEventListener(listener)
+                    }
+
                 }
+            } else {
+                DisposableEffect(relationShip?.lastsongplayed2) {
+                    val relationRef = db.reference.child("Relationships")
+                        .child(userViewModel.loggedInUser!!.relationship)
+                    val listener = object : ValueEventListener {
 
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("Firebase", "Error observing user data: ${error.message}")
+                        override fun onDataChange(snapshot: DataSnapshot) {
+
+
+                            val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                            relationShip = updatedRelation
+
+                            notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed2)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e("Firebase", "Error observing user data: ${error.message}")
+                        }
+                    }
+
+                    relationRef.addValueEventListener(listener)
+                    // Remove the listener when the composable is disposed
+                    onDispose {
+                        relationRef.removeEventListener(listener)
+                    }
+
                 }
             }
-
-            relationRef.addValueEventListener(listener)
-            // Remove the listener when the composable is disposed
-            onDispose {
-                relationRef.removeEventListener(listener)
-            }
-
-        }
-    } else {
-        DisposableEffect(relationShip?.lastsongplayed1) {
-            val relationRef = db.reference.child("Relationship").child(userViewModel.loggedInUser!!.relationship)
-            val listener = object : ValueEventListener {
-
-                override fun onDataChange(snapshot: DataSnapshot) {
-
-                    notificationService.showNewSongPlayedNotification(currentlyPlayingSong!!.name)
-
-                    val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                    relationShip = updatedRelation
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("Firebase", "Error observing user data: ${error.message}")
-                }
-            }
-
-            relationRef.addValueEventListener(listener)
-            // Remove the listener when the composable is disposed
-            onDispose {
-                relationRef.removeEventListener(listener)
-            }
-
-        }
     }
 
     // Trigger the effect when playlistName changes
