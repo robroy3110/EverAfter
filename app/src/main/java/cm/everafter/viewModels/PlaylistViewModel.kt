@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import cm.everafter.classes.Playlist
 import cm.everafter.classes.Song
+import cm.everafter.screens.home.storage
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -144,16 +145,6 @@ class PlaylistViewModel : ViewModel() {
                         playlist?.let {
                             val updatedSongs = (it.songs ?: emptyList()) + songs
 
-                            if (it.songs.isNullOrEmpty() && updatedSongs.isNotEmpty()) {
-                                // If the playlist was empty and now has songs, set the playlist image
-                                val firstSongImage = updatedSongs.firstOrNull()?.imageFileName
-                                if (!firstSongImage.isNullOrEmpty()) {
-                                    println("---------Song Picture added to Playlist!----")
-                                    playlistsRef.child(playlistSnapshot.key ?: "").child("imageUri").setValue(firstSongImage)
-                                    _playlistState.value = it.copy(imageUri = firstSongImage, songs = updatedSongs)
-                                }
-                            }
-
                             // Update the playlist by adding new songs
                             playlistsRef.child(playlistSnapshot.key ?: "").child("songs").setValue(updatedSongs)
                             _playlistState.value = it.copy(songs = updatedSongs)
@@ -171,6 +162,7 @@ class PlaylistViewModel : ViewModel() {
             }
         })
     }
+
 
 
     // Inside PlaylistViewModel class
@@ -202,34 +194,6 @@ class PlaylistViewModel : ViewModel() {
             }
         })
     }
-
-
-/*    fun saveEditedPlaylistToFirebase(playlist: Playlist) {
-        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
-        val playlistsRef = database.getReference("Playlists")
-
-        val query = playlistsRef.orderByChild("name").equalTo(playlist.name)
-
-        query.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (childSnapshot in snapshot.children) {
-                    val playlistKey = childSnapshot.key
-                    if (playlistKey != null) {
-                        // Update the playlist details
-                        playlistsRef.child(playlistKey).setValue(playlist)
-                        return
-                    }
-                }
-
-                // If no matching playlist is found, you can handle it accordingly
-                // For example, you can log an error or show a message to the user.
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Handle the error if the query is canceled
-            }
-        })
-    }*/
 
     fun deleteSongFromPlaylist(playlistName: String, song: Song) {
         val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
@@ -268,7 +232,7 @@ class PlaylistViewModel : ViewModel() {
         })
     }
 
-    // Inside PlaylistViewModel class
+
     fun updatePlaylistName(playlistName: String, newPlaylistName: String) {
         val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
         val playlistsRef = database.getReference("Playlists")
@@ -296,6 +260,69 @@ class PlaylistViewModel : ViewModel() {
                 println("Couldn't update the Playlist name in Firebase for some reason...")
             }
         })
+    }
+
+    fun updatePlaylistImageUri(playlistName: String, fileName: String) {
+        val storageRef = storage.reference.child("PlaylistsPics/$fileName")
+
+        // Get the download URL for the image
+        storageRef.downloadUrl.addOnSuccessListener { uri ->
+            // Update the playlist image URI in the database with the full URL
+            updatePlaylistImage(playlistName, uri.toString())
+        }.addOnFailureListener { exception ->
+            // Handle the failure to get the download URL
+            println("Couldn't get the download URL for the uploaded image: ${exception.message}")
+        }
+    }
+
+    private fun updatePlaylistImage(playlistName: String, newImageUri: String) {
+        val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val playlistsRef = database.getReference("Playlists")
+
+        // Query to get the playlist with the specified name
+        val query = playlistsRef.orderByChild("name").equalTo(playlistName)
+
+        // Fetch data from Firebase using the query
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // Iterate through the dataSnapshot to get the playlist
+                    for (playlistSnapshot in snapshot.children) {
+                        // Update the playlist image URI
+                        playlistsRef.child(playlistSnapshot.key ?: "").child("imageUri")
+                            .setValue(newImageUri)
+
+                        // Update the local playlist state
+                        _playlistState.value = _playlistState.value?.copy(imageUri = newImageUri)
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle the error if the query is canceled
+                println("Couldn't update the Playlist image in Firebase for some reason...")
+            }
+        })
+    }
+
+
+    fun uploadImageToStorage(playlistName: String, imageUri: Uri) {
+        Log.e("UPLOAD IMG TO STORAGE", playlistName)
+        val storageRef = storage.reference.child("PlaylistsPics/$playlistName.jpg")
+
+        // Upload the file to Firebase Storage
+        storageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                // File uploaded successfully
+                storageRef.downloadUrl.addOnSuccessListener { uri ->
+                    // Update the playlist's image URI in the database
+                    updatePlaylistImage(playlistName, "$playlistName.jpg")
+                }
+            }
+            .addOnFailureListener { exception ->
+                // Handle unsuccessful upload
+                // You might want to show an error message to the user
+            }
     }
 
 }

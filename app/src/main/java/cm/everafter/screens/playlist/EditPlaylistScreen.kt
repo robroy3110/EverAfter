@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.ClickableText
@@ -76,13 +77,15 @@ fun EditPlaylistScreen(
     // Initialize state for handling image selection
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Create an ActivityResultLauncher for image selection
-    val getContent =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let {
-                selectedImageUri = it
+
+    val getContent = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            playlistName?.let { name ->
+                playlistViewModel.uploadImageToStorage(name, it)
             }
         }
+    }
     // Launch the gallery for image selection
     fun chooseImage() {
         getContent.launch("image/*")
@@ -332,10 +335,11 @@ fun ClickablePlaylistImage(
 ) {
     Box(
         modifier = Modifier
+            .fillMaxWidth()
             .clickable {
                 onImageClick()
             }
-            .fillMaxWidth()
+            .wrapContentSize(Alignment.Center)
     ) {
         // Display the playlist image
         PlaylistImage(playlist = playlist, storageRef = storageRef)
@@ -347,7 +351,7 @@ fun ClickablePlaylistImage(
                     onImageClick()
                 },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.Center)
                     .padding(8.dp)
             ) {
                 Icon(
