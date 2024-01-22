@@ -16,7 +16,9 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -52,12 +54,12 @@ fun EverAfter(notificationService: NotificationService) {
         ),
         NavItem(
             label = "Games",
-            icon = Icons.Default.PlayArrow,
+            icon = Icons.Filled.VideogameAsset,
             route = Screens.GamesScreen.route
         ),
         NavItem(
             label = "Playlist",
-            icon = Icons.Default.List,
+            icon = Icons.Filled.MusicNote,
             route = Screens.PlaylistScreen.route
         ),
     )

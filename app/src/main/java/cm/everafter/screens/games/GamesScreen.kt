@@ -1,24 +1,39 @@
 package cm.everafter.screens.games
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -35,8 +50,12 @@ import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import cm.everafter.NotificationService
 import cm.everafter.classes.Game
 import cm.everafter.screens.home.auth
@@ -45,6 +64,7 @@ import coil.compose.AsyncImage
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.getValue
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -53,6 +73,11 @@ import java.util.Locale
 
 val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
 
+sealed class GamesView {
+    object AllGamesView : GamesView()
+    object FavoriteGamesView : GamesView()
+}
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,26 +85,59 @@ fun GamesScreen(
     navController: NavController,
     notificationService: NotificationService,
     viewModel: UserViewModel,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
+    var selectedView by remember { mutableStateOf<GamesView>(GamesView.AllGamesView) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Free Games") },
                 actions = {
-                    Button(
-                        onClick = {
-                            notificationService.showBasicNotification()
-                        }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Show basic notifications")
+                        Button(
+                            onClick = {
+                                selectedView = GamesView.AllGamesView
+                            }
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = "All Games")
+                        }
+                        Button(
+                            onClick = {
+                                selectedView = GamesView.FavoriteGamesView
+                            }
+                        ) {
+                            Icon(Icons.Filled.Star, contentDescription = "Favorites")
+                        }
                     }
                 }
-                )
+            )
         }
+    ) { paddingValues ->
+        when (selectedView) {
+            is GamesView.AllGamesView -> {
+                AllGamesView(navController, notificationService, viewModel, modifier)
+            }
+            is GamesView.FavoriteGamesView -> {
+                FavoriteGamesView(navController, notificationService, viewModel, modifier)
+            }
+        }
+    }
+}
 
-    ) {
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AllGamesView(
+    navController: NavController,
+    notificationService: NotificationService,
+    viewModel: UserViewModel,
+    modifier: Modifier = Modifier,
+) {
+
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -120,7 +178,6 @@ fun GamesScreen(
                 modifier = modifier
                     .fillMaxSize()
                     .padding(top = 80.dp)
-                    .padding(horizontal = 20.dp)
             ) {
                 itemsIndexed(freeGamesToday) { index, game ->
                     viewModel.loggedInUser?.let { it1 -> GameItem(game = game, it1.relationship) }
@@ -129,8 +186,48 @@ fun GamesScreen(
             }
 
         }
-    }
 }
+
+@Composable
+fun FavoriteGamesView(
+    navController: NavController,
+    notificationService: NotificationService,
+    viewModel: UserViewModel,
+    modifier: Modifier = Modifier
+) {
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp),
+
+        ) {
+        var games by remember { mutableStateOf<List<Game?>>(mutableListOf()) }
+
+        LaunchedEffect(Unit) {
+            games = getGames(viewModel.loggedInUser!!.relationship)
+        }
+
+        LazyColumn (
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 80.dp)
+        ) {
+            itemsIndexed(games) { index, game ->
+                viewModel.loggedInUser?.let { it1 ->
+                    if (game != null) {
+                        GameItemFav(game = game, it1.relationship, LocalContext.current)
+                    }
+                }
+            }
+
+        }
+
+    }
+
+
+}
+
 
 @Composable
 fun GameItem(game: Game, relationship: String) {
@@ -142,41 +239,65 @@ fun GameItem(game: Game, relationship: String) {
         isFavorited = game.exists()
     }
 
-    Card{
-        Surface(
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFD9D9D9)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
+                .fillMaxWidth()
         ) {
-            Column {
-                Row(
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                AsyncImage(
+                    model = game.thumbnail,
+                    contentDescription = "Translated description of what the image contains",
                     modifier = Modifier
-                        .padding(16.dp)
+                        .size(85.dp) // Defina o tamanho da imagem conforme necessário
+                        .clip(shape = RoundedCornerShape(4.dp)) // Adiciona bordas arredondadas à imagem
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Defina um width fixo para a Column que contém o título
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
                 ) {
-
-                    AsyncImage(
-                        model = game.thumbnail,
-                        contentDescription = "Translated description of what the image contains",
+                    Text(
+                        text = game.title,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2, // Define o número máximo de linhas para o título
+                        overflow = TextOverflow.Ellipsis // Adiciona reticências (...) quando o texto é cortado
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = game.title,
-                            fontWeight = FontWeight.Bold
-                        )
 
-                        Text(
-                            text = game.genre,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
-                    // Adicione o ícone clicável para adicionar/remover dos favoritos
-                    Icon(
-                        imageVector = if (isFavorited) Icons.Filled.Star else Icons.Filled.StarBorder,
-                        contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
-                        tint = if (isFavorited) Color.Red else Color.Gray,
-                        modifier = Modifier.clickable {
+                    Spacer(modifier = Modifier.height(4.dp)) // Adiciona espaçamento vertical
+
+                    Text(
+                        text = game.genre,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+
+
+                // Adicione o ícone clicável para adicionar/remover dos favoritos
+                Icon(
+                    imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
+                    tint = if (isFavorited) Color.Red else Color.Gray,
+                    modifier = Modifier.size(24.dp) // Define o tamanho do ícone
+                        .clickable {
                             if (isFavorited) {
                                 removeFromFavGames(relationship, game.title)
                             } else {
@@ -185,13 +306,137 @@ fun GameItem(game: Game, relationship: String) {
                             // Alterne o estado de favoritos
                             isFavorited = !isFavorited
                         }
-                    )
-                }
+                )
 
             }
         }
     }
 }
+
+@Composable
+fun GameItemFav(game: Game, relationship: String, context: Context) {
+
+    var isFavorited by remember { mutableStateOf(false) }
+    var isChecked by remember { mutableStateOf(false) }
+    var pointsGames by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        val game = db.reference.child("Relationships").child(relationship).child("favgames").child(game.title).get().await()
+        var gamePointsSnapshot  =  db.reference.child("Relationships").child(relationship).child("pointsGames").get().await()
+        isFavorited = game.exists()
+        // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+        if (gamePointsSnapshot.exists()) {
+            // Obtém a pontuação dos jogos como uma string
+            val gamePointsString = gamePointsSnapshot.value.toString()
+            // Converte a string para um inteiro (assumindo que a string representa um número)
+            pointsGames = gamePointsString.toIntOrNull() ?: 0
+        } else {
+            // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+            pointsGames = 0
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFD9D9D9)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // Adicione o CheckBox à esquerda da AsyncImage
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = { newCheckedState ->
+                        isChecked = newCheckedState
+                        // Adicione a lógica aqui para a ação desejada ao marcar/desmarcar
+                        if (isChecked) {
+                            // Por exemplo: adicionar 20 aos pointsGames
+                            pointsGames += 20
+                            // Atualizar a pontuação no banco de dados, se necessário
+                            db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsGames)
+
+                            // Mostrar um Toast informando sobre a ação
+                            Toast.makeText(context, "You both won 20 for playing this game today", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // Por exemplo: subtrair 20 dos pointsGames (opcional)
+                            pointsGames -= 20
+                            // Atualizar a pontuação no banco de dados, se necessário
+                            db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsGames)
+
+                            // Mostrar um Toast informando sobre a ação
+                            Toast.makeText(context, "Undo", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+
+
+                AsyncImage(
+                    model = game.thumbnail,
+                    contentDescription = "Translated description of what the image contains",
+                    modifier = Modifier
+                        .size(85.dp) // Defina o tamanho da imagem conforme necessário
+                        .clip(shape = RoundedCornerShape(4.dp)) // Adiciona bordas arredondadas à imagem
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Defina um width fixo para a Column que contém o título
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = game.title,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2, // Define o número máximo de linhas para o título
+                        overflow = TextOverflow.Ellipsis // Adiciona reticências (...) quando o texto é cortado
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp)) // Adiciona espaçamento vertical
+
+                    Text(
+                        text = game.genre,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Adicione o ícone clicável para adicionar/remover dos favoritos
+                Icon(
+                    imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
+                    tint = if (isFavorited) Color.Red else Color.Gray,
+                    modifier = Modifier.size(24.dp) // Define o tamanho do ícone
+                        .clickable {
+                            if (isFavorited) {
+                                removeFromFavGames(relationship, game.title)
+                            } else {
+                                addToFavGames(relationship, game.title)
+                            }
+                            // Alterne o estado de favoritos
+                            isFavorited = !isFavorited
+                        }
+                )
+
+            }
+        }
+    }
+}
+
 
 // Adiciona um jogo à lista de jogos favoritos
 fun addToFavGames(relationship: String, gameTitle: String) {
@@ -202,4 +447,21 @@ fun addToFavGames(relationship: String, gameTitle: String) {
 fun removeFromFavGames(relationship: String, gameTitle: String) {
     // Remove o jogo usando a chave
     db.reference.child("Relationships").child(relationship).child("favgames").child(gameTitle).removeValue()
+}
+
+suspend fun getGames(relationship: String): List<Game?> {
+    var gamesTemp = db.reference.child("Relationships").child(relationship).child("favgames").get().await()
+    var games = mutableListOf<Game?>()
+
+    if (gamesTemp.exists()) {
+        for (game in gamesTemp.children) {
+            var gameTemp = db.reference.child("FreeGames").child(game.value.toString()).get().await()
+            if (gameTemp.exists()) {
+                val final = gameTemp.getValue(Game::class.java)
+                games.add(final)
+            }
+        }
+    }
+
+    return games
 }
