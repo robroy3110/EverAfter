@@ -31,8 +31,9 @@ class App : Application() {
         notificationManager.createNotificationChannel(notificationChannel)
 
 
-        initializeWorkManager()
+        initializeGameWorkManager()
         initKoin()
+
 
     }
 
@@ -44,7 +45,7 @@ class App : Application() {
         }
     }
 
-    private fun initializeWorkManager() {
+    private fun initializeGameWorkManager() {
         // Configura a hora para 18:00:00 todos os dias
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, 18)

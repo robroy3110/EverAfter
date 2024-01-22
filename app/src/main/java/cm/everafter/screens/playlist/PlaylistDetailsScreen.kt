@@ -2,6 +2,7 @@ package cm.everafter.screens.playlist
 
 import PlaylistImage
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,12 +94,19 @@ fun PlaylistDetailsScreen(
     var relationShip by remember { mutableStateOf<RelationShip?>(null) }
 
     val notificationService = NotificationService(LocalContext.current)
+    var showToast by remember { mutableStateOf(false) }
+    var pointsMusic by remember { mutableStateOf(0) }
+    var pointsTotal by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
 
         val relationshipRef =
             db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).get()
                 .await()
+
+        var musicPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsMusic").get().await()
+        var totalPointsSnapshot  = db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").get().await()
+
         if (relationshipRef.exists()) {
             relationShip = relationshipRef.getValue(RelationShip::class.java)
             otheruser = ""
@@ -108,64 +116,92 @@ fun PlaylistDetailsScreen(
                 "2" + relationShip?.user2!!
             }
         }
+
+        // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+        if (musicPointsSnapshot.exists()) {
+            // Obtém a pontuação dos jogos como uma string
+            val musicPointsString = musicPointsSnapshot.value.toString()
+            // Converte a string para um inteiro (assumindo que a string representa um número)
+            pointsMusic = musicPointsString.toIntOrNull() ?: 0
+        } else {
+            // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+            pointsMusic = 0
+        }
+
+        // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+        if (totalPointsSnapshot.exists()) {
+            // Obtém a pontuação dos jogos como uma string
+            val totalPointsString = totalPointsSnapshot.value.toString()
+            // Converte a string para um inteiro (assumindo que a string representa um número)
+            pointsTotal = totalPointsString.toIntOrNull() ?: 0
+        } else {
+            // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+            pointsTotal = 0
+        }
     }
+
     relationShip?.let {
-            if (otheruser[0] == '1') {
-                DisposableEffect(relationShip?.lastsongplayed1) {
-                    val relationRef = db.reference.child("Relationships")
-                        .child(userViewModel.loggedInUser!!.relationship)
-                    val listener = object : ValueEventListener {
+        if (otheruser[0] == '1') {
+            DisposableEffect(relationShip?.lastsongplayed1) {
+                val relationRef = db.reference.child("Relationships")
+                    .child(userViewModel.loggedInUser!!.relationship)
+                val listener = object : ValueEventListener {
 
-                        override fun onDataChange(snapshot: DataSnapshot) {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                        relationShip = updatedRelation
 
-
-                            val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                            relationShip = updatedRelation
-
+                        if(relationShip!!.lastsongplayed1 != "") {
                             notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed1)
-
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            Log.e("Firebase", "Error observing user data: ${error.message}")
                         }
                     }
 
-                    relationRef.addValueEventListener(listener)
-                    // Remove the listener when the composable is disposed
-                    onDispose {
-                        relationRef.removeEventListener(listener)
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("Firebase", "Error observing user data: ${error.message}")
                     }
-
                 }
-            } else {
-                DisposableEffect(relationShip?.lastsongplayed2) {
-                    val relationRef = db.reference.child("Relationships")
-                        .child(userViewModel.loggedInUser!!.relationship)
-                    val listener = object : ValueEventListener {
 
-                        override fun onDataChange(snapshot: DataSnapshot) {
+                relationRef.addValueEventListener(listener)
+                // Remove the listener when the composable is disposed
+                onDispose {
+                    relationRef.removeEventListener(listener)
+                }
 
+            }
+        } else {
+            DisposableEffect(relationShip?.lastsongplayed2) {
+                val relationRef = db.reference.child("Relationships")
+                    .child(userViewModel.loggedInUser!!.relationship)
+                val listener = object : ValueEventListener {
 
-                            val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                            relationShip = updatedRelation
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val updatedRelation = snapshot.getValue(RelationShip::class.java)
+                        relationShip = updatedRelation
 
+                        if(relationShip!!.lastsongplayed2 != "") {
                             notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed2)
                         }
 
-                        override fun onCancelled(error: DatabaseError) {
-                            Log.e("Firebase", "Error observing user data: ${error.message}")
-                        }
                     }
-
-                    relationRef.addValueEventListener(listener)
-                    // Remove the listener when the composable is disposed
-                    onDispose {
-                        relationRef.removeEventListener(listener)
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("Firebase", "Error observing user data: ${error.message}")
                     }
-
                 }
+                relationRef.addValueEventListener(listener)
+                // Remove the listener when the composable is disposed
+                onDispose {
+                    relationRef.removeEventListener(listener)
+                }
+
             }
+        }
+    }
+
+    // Observar o estado para exibir o Toast dentro de um bloco @Composable
+    if (showToast) {
+        Toast.makeText(LocalContext.current, "You both won 28 for listening to the same song!", Toast.LENGTH_SHORT).show()
+        // Resetar o estado para evitar a exibição repetida do Toast
+        showToast = false
     }
 
     // Trigger the effect when playlistName changes
@@ -329,8 +365,25 @@ fun PlaylistDetailsScreen(
 
                             if(otheruser[0] == '1') {
                                 db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed2").setValue(song.name)
+
+                                if(relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) {
+                                    showToast = true
+                                    pointsTotal += 28
+                                    pointsMusic += 28
+                                    cm.everafter.screens.games.db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsMusic").setValue(pointsMusic)
+                                    cm.everafter.screens.games.db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").setValue(pointsTotal)
+                                }
+
                             } else {
                                 db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed1").setValue(song.name)
+
+                                if(relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) {
+                                    showToast = true
+                                    pointsTotal += 28
+                                    pointsMusic += 28
+                                    cm.everafter.screens.games.db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsMusic").setValue(pointsMusic)
+                                    cm.everafter.screens.games.db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").setValue(pointsTotal)
+                                }
                             }
 
                             // Start playing the song

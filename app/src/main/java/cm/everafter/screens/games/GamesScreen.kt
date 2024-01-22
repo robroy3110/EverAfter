@@ -319,10 +319,13 @@ fun GameItemFav(game: Game, relationship: String, context: Context) {
     var isFavorited by remember { mutableStateOf(false) }
     var isChecked by remember { mutableStateOf(false) }
     var pointsGames by remember { mutableStateOf(0) }
+    var pointsTotal by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
         val game = db.reference.child("Relationships").child(relationship).child("favgames").child(game.title).get().await()
         var gamePointsSnapshot  =  db.reference.child("Relationships").child(relationship).child("pointsGames").get().await()
+        var totalPointsSnapshot  =  db.reference.child("Relationships").child(relationship).child("pointsTotal").get().await()
+
         isFavorited = game.exists()
         // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
         if (gamePointsSnapshot.exists()) {
@@ -334,6 +337,18 @@ fun GameItemFav(game: Game, relationship: String, context: Context) {
             // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
             pointsGames = 0
         }
+
+        // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+        if (totalPointsSnapshot.exists()) {
+            // Obtém a pontuação dos jogos como uma string
+            val totalPointsString = totalPointsSnapshot.value.toString()
+            // Converte a string para um inteiro (assumindo que a string representa um número)
+            pointsTotal = totalPointsString.toIntOrNull() ?: 0
+        } else {
+            // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+            pointsTotal = 0
+        }
+
     }
 
     Box(
@@ -361,18 +376,24 @@ fun GameItemFav(game: Game, relationship: String, context: Context) {
                         isChecked = newCheckedState
                         // Adicione a lógica aqui para a ação desejada ao marcar/desmarcar
                         if (isChecked) {
+
+                            pointsTotal += 20
                             // Por exemplo: adicionar 20 aos pointsGames
                             pointsGames += 20
                             // Atualizar a pontuação no banco de dados, se necessário
                             db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsGames)
+                            db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsTotal)
 
                             // Mostrar um Toast informando sobre a ação
                             Toast.makeText(context, "You both won 20 for playing this game today", Toast.LENGTH_SHORT).show()
                         } else {
+
+                            pointsTotal -= 20
                             // Por exemplo: subtrair 20 dos pointsGames (opcional)
                             pointsGames -= 20
                             // Atualizar a pontuação no banco de dados, se necessário
                             db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsGames)
+                            db.reference.child("Relationships").child(relationship).child("pointsGames").setValue(pointsTotal)
 
                             // Mostrar um Toast informando sobre a ação
                             Toast.makeText(context, "Undo", Toast.LENGTH_SHORT).show()

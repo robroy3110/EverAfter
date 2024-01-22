@@ -47,7 +47,7 @@ class NotificationService(
     fun showNewSongPlayedNotification(songName: String) {
 
         val notification = NotificationCompat.Builder(context, "game_notification")
-            .setContentTitle("Your partner is listening to " + songName)
+            .setContentTitle("Your partner was listening to " + songName)
             .setContentText("Go listen to it and gain points!")
             .setSmallIcon(R.drawable.game_icon)
             .setPriority(NotificationManager.IMPORTANCE_HIGH)

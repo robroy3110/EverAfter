@@ -103,16 +103,27 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
         floatingActionButton = {
 
             var pointsPictures by remember { mutableStateOf(0) }
+            var pointsTotal by remember { mutableStateOf(0) }
 
             LaunchedEffect(Unit) {
                 var picturesPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsPictures").get().await()
-
+                var totalPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").get().await()
                 // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
                 if (picturesPointsSnapshot.exists()) {
                     // Obtém a pontuação dos jogos como uma string
                     val picturePointsString = picturesPointsSnapshot.value.toString()
                     // Converte a string para um inteiro (assumindo que a string representa um número)
                     pointsPictures = picturePointsString.toIntOrNull() ?: 0
+                } else {
+                    // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
+                    pointsPictures = 0
+                }
+                // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
+                if (totalPointsSnapshot.exists()) {
+                    // Obtém a pontuação dos jogos como uma string
+                    val totalPointsSnapshot = totalPointsSnapshot.value.toString()
+                    // Converte a string para um inteiro (assumindo que a string representa um número)
+                    pointsPictures = totalPointsSnapshot.toIntOrNull() ?: 0
                 } else {
                     // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
                     pointsPictures = 0
@@ -168,10 +179,11 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
 
                             cameraViewModel.storePhoto(bitmapImage)
 
+                            pointsTotal += 7
                             pointsPictures += 7
                             // Atualizar a pontuação no banco de dados, se necessário
                             db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsPictures").setValue(pointsPictures)
-
+                            db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").setValue(pointsTotal)
                             // Mostrar um Toast informando sobre a ação
                             Toast.makeText(context, "You both won 7 for taking a picture", Toast.LENGTH_SHORT).show()
 
