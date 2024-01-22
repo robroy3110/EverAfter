@@ -159,21 +159,35 @@ fun PlayListScreen(
             // Show the message only if the user's relationship is null or empty
             if (userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
                 // Display the "couple.png" image along with the message
-                Image(
-                    painter = painterResource(id = R.drawable.couple1), // Replace R.drawable.couple1 with your actual resource ID
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(150.dp)
-                        .padding(end = 8.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Create your first Shared Playlist!",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                        .fillMaxSize()
+                        .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(8.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.couple), // Replace R.drawable.couple1 with your actual resource ID
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(150.dp)
+                                .padding(end = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Join a relationship to create a Shared Playlist!",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             }
         }
 
