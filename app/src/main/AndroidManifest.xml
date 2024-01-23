@@ -13,7 +13,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
+
         android:name = ".classes.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -25,6 +27,14 @@
         android:theme="@style/Theme.EverAfter"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
+
+        <service
+            android:name=".screens.camera.CameraScreenLocation"
+            android:foregroundServiceType="location"
+            android:enabled="true">
+
+        </service>
+        <!-- Any inner elements go here. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

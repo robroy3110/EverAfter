@@ -94,7 +94,8 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.IntStream.range
 
 
-val db = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+val db =
+    Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
 val auth = Firebase.auth
 val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
 val storageRef = storage.reference
@@ -109,25 +110,24 @@ fun HomeScreen(
     if (auth.currentUser == null) {
         navController.navigate(Screens.LogInScreen.route)
     } else {
-        ResultScreen(modifier = modifier.fillMaxWidth(), navController,viewModel)
+        ResultScreen(modifier = modifier.fillMaxWidth(), navController, viewModel)
     }
 
 }
 
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: UserViewModel) {
+fun ResultScreen(modifier: Modifier, navController: NavController, viewModel: UserViewModel) {
 
     var user by remember { mutableStateOf<Perfil?>(null) }
     var userImageBitMap by remember { mutableStateOf<Bitmap?>(null) }
-    var notificationsUsers by remember { mutableStateOf<List<User?>?>(mutableListOf())}
+    var notificationsUsers by remember { mutableStateOf<List<User?>?>(mutableListOf()) }
     var otherUser by remember { mutableStateOf<Perfil?>(null) }
-    var otherUserImageBitMap by remember { mutableStateOf<Bitmap?>(null)}
+    var otherUserImageBitMap by remember { mutableStateOf<Bitmap?>(null) }
 
-    var relationShip by remember {mutableStateOf<RelationShip?>(null)}
+    var relationShip by remember { mutableStateOf<RelationShip?>(null) }
 
 
     LaunchedEffect(Unit) {
@@ -157,7 +157,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             userRef.removeEventListener(listener)
         }
     }
-    if(user != null && user!!.relationship != ""){
+    if (user != null && user!!.relationship != "") {
         DisposableEffect(relationShip?.date) {
             // Observe changes in the relationship property of the user
             val relationRef = db.reference.child("Relationships").child(user!!.relationship)
@@ -173,7 +173,9 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                 }
             }
 
-            val userRef = db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship").setValue(user!!.relationship)
+            val userRef =
+                db.reference.child("Users").child(auth.currentUser!!.uid).child("relationship")
+                    .setValue(user!!.relationship)
 
             relationRef.addValueEventListener(listener)
             // Remove the listener when the composable is disposed
@@ -187,25 +189,25 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
 
         viewModel.loggedInUser = thisUser
 
-        if(thisUser.image != ""){
+        if (thisUser.image != "") {
             val ref = storageRef.child("ProfilePics/${thisUser.image}")
             val megabytes: Long = 1024 * 1024
             LaunchedEffect(Unit) {
                 try {
                     val byteArray = ref.getBytes(megabytes).await()
-                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 } catch (e: Exception) {
                     // Handle failure
                     e.printStackTrace()
                 }
             }
-        }else{
+        } else {
             val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
             val megabytes: Long = 1024 * 1024
             LaunchedEffect(Unit) {
                 try {
                     val byteArray = ref.getBytes(megabytes).await()
-                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                    userImageBitMap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 } catch (e: Exception) {
                     // Handle failure
                     e.printStackTrace()
@@ -214,7 +216,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
         }
 
 
-        if(thisUser.relationship != "") {
+        if (thisUser.relationship != "") {
             LaunchedEffect(Unit) {
                 try {
                     val relationshipRef =
@@ -231,16 +233,16 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                         val otherUserRef = db.reference.child("Users").child(other).get().await()
                         if (otherUserRef.exists()) {
                             otherUser = otherUserRef.getValue(Perfil::class.java)
-                            otherUserImageBitMap = if(otherUser?.image != ""){
+                            otherUserImageBitMap = if (otherUser?.image != "") {
                                 val ref = storageRef.child("ProfilePics/${otherUser?.image}")
                                 val megabytes: Long = 1024 * 1024
                                 val byteArray = ref.getBytes(megabytes).await()
-                                BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
-                            }else{
+                                BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                            } else {
                                 val ref = storageRef.child("ProfilePics/default_profile_pic.jpg")
                                 val megabytes: Long = 1024 * 1024
                                 val byteArray = ref.getBytes(megabytes).await()
-                                BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                                BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                             }
                         }
                     }
@@ -275,8 +277,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
             }
 
 
-
-        }else{
+        } else {
             if (thisUser.notifications.isNotEmpty()) {
                 LaunchedEffect(Unit) {
                     notificationsUsers = getUserDataFromFirebaseWithImage(thisUser.notifications)
@@ -304,7 +305,7 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                         )
                     }
                 }
-            }else{
+            } else {
                 userImageBitMap?.let {
                     HomeScreenNoRelation(
                         modifier = modifier,
@@ -327,7 +328,6 @@ fun ResultScreen( modifier: Modifier, navController: NavController,viewModel: Us
                 }
             }
         }
-
 
 
     }
@@ -447,7 +447,7 @@ fun HomeScreenRelation(
                         contentScale = ContentScale.Crop,
                     )
                 }
-                if(showDialogNotifications){
+                if (showDialogNotifications) {
                     Dialog(
                         onDismissRequest = { showDialogNotifications = false },
                         content = {
@@ -457,7 +457,7 @@ fun HomeScreenRelation(
                                     .height(375.dp)
                                     .padding(16.dp),
                                 shape = RoundedCornerShape(16.dp),
-                            ){
+                            ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize(),
@@ -470,9 +470,9 @@ fun HomeScreenRelation(
                         }
                     )
                 }
-                if(showDialogChangeDate){
-                    Dialog(onDismissRequest = {showDialogChangeDate = false},
-                        content= {
+                if (showDialogChangeDate) {
+                    Dialog(onDismissRequest = { showDialogChangeDate = false },
+                        content = {
                             var date by remember {
                                 mutableStateOf("")
                             }
@@ -494,19 +494,21 @@ fun HomeScreenRelation(
                                             it.setOnDateChangeListener { calendarView, year, month, day ->
                                                 date = "$day-${month + 1}-$year"
                                                 if (!isDateValid(date)) {
-                                                   showDialogChangeDate = false
+                                                    showDialogChangeDate = false
                                                     showDialogErrorDate = true
                                                 }
                                             }
                                         })
                                     Text(text = date)
                                     Button(
-                                        modifier = Modifier.fillMaxWidth().padding(
-                                            start = 24.dp,
-                                            top = 0.dp,
-                                            end = 24.dp,
-                                            bottom = 24.dp
-                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                start = 24.dp,
+                                                top = 0.dp,
+                                                end = 24.dp,
+                                                bottom = 24.dp
+                                            ),
                                         onClick = {
 
                                             db.reference.child("Relationships")
@@ -523,9 +525,9 @@ fun HomeScreenRelation(
                             }
                         })
                 }
-                if(showDialogErrorDate){
-                    Dialog(onDismissRequest = {showDialogErrorDate = false},
-                        content= {
+                if (showDialogErrorDate) {
+                    Dialog(onDismissRequest = { showDialogErrorDate = false },
+                        content = {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -541,12 +543,14 @@ fun HomeScreenRelation(
                                 ) {
                                     Text(text = "You can't choose a future date")
                                     Button(
-                                        modifier = Modifier.fillMaxWidth().padding(
-                                            start = 24.dp,
-                                            top = 24.dp,
-                                            end = 24.dp,
-                                            bottom = 24.dp
-                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                start = 24.dp,
+                                                top = 24.dp,
+                                                end = 24.dp,
+                                                bottom = 24.dp
+                                            ),
                                         onClick = {
                                             showDialogErrorDate = false
                                             showDialogChangeDate = true
@@ -584,14 +588,21 @@ fun HomeScreenRelation(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if(relationShip!!.date == "0-0-0"){
-                    Text(
-                        text = "Tap here to set the day you started dating!",
-                        modifier = Modifier.wrapContentSize())
-                    }else{
+                    if (relationShip!!.date == "0-0-0") {
                         Text(
-                            text = "You have been together for ${calcularDiferencaDias(relationShip.date,SimpleDateFormat("dd-MM-yyyy").format(Date()))} days",
-                            modifier = Modifier.wrapContentSize())
+                            text = "Tap here to set the day you started dating!",
+                            modifier = Modifier.wrapContentSize()
+                        )
+                    } else {
+                        Text(
+                            text = "You have been together for ${
+                                calcularDiferencaDias(
+                                    relationShip.date,
+                                    SimpleDateFormat("dd-MM-yyyy").format(Date())
+                                )
+                            } days",
+                            modifier = Modifier.wrapContentSize()
+                        )
                     }
                 }
             }
@@ -652,21 +663,25 @@ fun RelationshipProgressBar(points: Int, quest: String) {
             loversFill = points in 201..350
             addictedFill = points > 350
         }
+
         "Music" -> {
             likersFill = points in 1..450
             loversFill = points in 451..920
             addictedFill = points > 921
         }
+
         "Gaming" -> {
             likersFill = points in 1..360
             loversFill = points in 331..660
             addictedFill = points > 661
         }
+
         "Pictures" -> {
             likersFill = points in 1..300
             loversFill = points in 301..500
             addictedFill = points > 500
         }
+
         else -> {
             likersFill = false
             loversFill = false
@@ -679,7 +694,7 @@ fun RelationshipProgressBar(points: Int, quest: String) {
     var loversColor = Color(0xFFD9D9D9)
     var addictedColor = Color(0xFFD9D9D9)
 
-    if(likersFill) {
+    if (likersFill) {
         likersColor = Color(0xFFD896FF)
     } else if (loversFill) {
         likersColor = Color(0xFFD896FF)
@@ -766,24 +781,28 @@ fun RelationshipProgressBar(points: Int, quest: String) {
                         2 -> "351+"
                         else -> ""
                     }
+
                     "Music" -> when (i) {
                         0 -> "1-450"
                         1 -> "451-920"
                         2 -> "921+"
                         else -> ""
                     }
+
                     "Gaming" -> when (i) {
                         0 -> "1-360"
                         1 -> "361-660"
                         2 -> "661+"
                         else -> ""
                     }
+
                     "Pictures" -> when (i) {
                         0 -> "1-300"
                         1 -> "301-500"
                         2 -> "501+"
                         else -> ""
                     }
+
                     else -> ""
                 }
 
@@ -793,9 +812,15 @@ fun RelationshipProgressBar(points: Int, quest: String) {
                 }
 
                 // Posiciona o texto da faixa abaixo do texto principal
-                val rangeTextX = (segmentWidth - rangeTextPaint.measureText(rangeText)) / 2 + segmentWidth * i
+                val rangeTextX =
+                    (segmentWidth - rangeTextPaint.measureText(rangeText)) / 2 + segmentWidth * i
                 val rangeTextY = segmentHeight / 2 + rangeTextPaint.textSize / 2 + 20.dp.toPx()
-                drawContext.canvas.nativeCanvas.drawText(rangeText, rangeTextX, rangeTextY, rangeTextPaint)
+                drawContext.canvas.nativeCanvas.drawText(
+                    rangeText,
+                    rangeTextX,
+                    rangeTextY,
+                    rangeTextPaint
+                )
             }
         }
     }
@@ -803,14 +828,20 @@ fun RelationshipProgressBar(points: Int, quest: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisUser: Perfil, userBitMap: Bitmap,notificationsUsers: List<User?>) {
+fun HomeScreenNoRelation(
+    modifier: Modifier,
+    navController: NavController,
+    thisUser: Perfil,
+    userBitMap: Bitmap,
+    notificationsUsers: List<User?>
+) {
     var searchUser by remember { mutableStateOf<User?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var showDialogUser by remember { mutableStateOf(false) }
     var showDialogError by remember { mutableStateOf(false) }
     var showDialogUserInRelationship by remember { mutableStateOf(false) }
-    var showDialogNotificationSent by remember { mutableStateOf(false)}
-    var showDialogNotifications by remember { mutableStateOf(false)}
+    var showDialogNotificationSent by remember { mutableStateOf(false) }
+    var showDialogNotifications by remember { mutableStateOf(false) }
     val username = remember { mutableStateOf(TextFieldValue()) }
     Column(
         modifier = modifier
@@ -862,7 +893,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                     .background(Color.Transparent)
                     .clip(CircleShape) // Garante que o botão seja circular
             ) {
-                Box{
+                Box {
                     Icon(
                         imageVector = Icons.Outlined.Notifications,
                         contentDescription = "Notifications",
@@ -953,7 +984,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             .height(375.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -977,11 +1008,12 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
                                     db.reference.child("Usernames")
-                                        .child(username.value.text.trim()).get().addOnCompleteListener {
-                                            if (it.result.exists()){
+                                        .child(username.value.text.trim()).get()
+                                        .addOnCompleteListener {
+                                            if (it.result.exists()) {
                                                 showDialog = showDialog.not()
                                                 showDialogUser = showDialogUser.not()
-                                            }else{
+                                            } else {
                                                 showDialog = showDialog.not()
                                                 showDialogError = showDialogError.not()
                                             }
@@ -1004,7 +1036,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 Dialog(
                     onDismissRequest = { showDialogUser = false },
                     content = {
-                        Card{
+                        Card {
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -1019,7 +1051,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                         Image(
                                             it.image!!.asImageBitmap(),
                                             contentDescription = null,
-                                            contentScale= ContentScale.FillBounds,
+                                            contentScale = ContentScale.FillBounds,
                                             modifier = Modifier
                                                 .size(64.dp)
                                                 .clip(CircleShape)
@@ -1050,18 +1082,31 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
 
                                     }
                                     Button(
-                                        modifier = Modifier.fillMaxWidth().padding(start= 24.dp,top= 0.dp,end = 24.dp,bottom = 24.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                start = 24.dp,
+                                                top = 0.dp,
+                                                end = 24.dp,
+                                                bottom = 24.dp
+                                            ),
                                         onClick = {
-                                            Log.i("TESTET","${it.relationship} && ${thisUser.relationship}")
-                                            if(it.relationship == "" && thisUser.relationship == "") {
+                                            Log.i(
+                                                "TESTET",
+                                                "${it.relationship} && ${thisUser.relationship}"
+                                            )
+                                            if (it.relationship == "" && thisUser.relationship == "") {
 
-                                                db.reference.child("Users").child(it.id.trim()).child("notifications").child(thisUser.username).setValue(
-                                                    auth.currentUser!!.uid)
+                                                db.reference.child("Users").child(it.id.trim())
+                                                    .child("notifications").child(thisUser.username)
+                                                    .setValue(
+                                                        auth.currentUser!!.uid
+                                                    )
 
                                                 showDialogNotificationSent = true
                                                 showDialogUser = false
 
-                                            }else{
+                                            } else {
                                                 showDialogUserInRelationship = true
                                                 showDialogUser = false
                                             }
@@ -1077,7 +1122,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 )
             }
         }
-        if(showDialogError){
+        if (showDialogError) {
             Dialog(
                 onDismissRequest = { showDialogError = false },
                 content = {
@@ -1087,7 +1132,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             .height(375.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -1117,10 +1162,12 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 }
             )
         }
-        if(showDialogUserInRelationship){
+        if (showDialogUserInRelationship) {
             Dialog(
-                onDismissRequest = { showDialogUserInRelationship = false
-                    showDialogUser = true},
+                onDismissRequest = {
+                    showDialogUserInRelationship = false
+                    showDialogUser = true
+                },
                 content = {
                     Card(
                         modifier = Modifier
@@ -1128,7 +1175,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             .height(375.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -1147,7 +1194,8 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             Button(
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
-                                    showDialogUserInRelationship = showDialogUserInRelationship.not()
+                                    showDialogUserInRelationship =
+                                        showDialogUserInRelationship.not()
                                     showDialog = showDialog.not()
                                 }
                             ) {
@@ -1158,7 +1206,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 }
             )
         }
-        if(showDialogNotificationSent){
+        if (showDialogNotificationSent) {
             Dialog(
                 onDismissRequest = { showDialogNotificationSent = false },
                 content = {
@@ -1168,7 +1216,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             .height(375.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -1193,7 +1241,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 }
             )
         }
-        if(showDialogNotifications){
+        if (showDialogNotifications) {
 
             Dialog(
                 onDismissRequest = { showDialogNotifications = false },
@@ -1204,15 +1252,15 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                             .height(375.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
                             verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            for (i in notificationsUsers){
-                                Card{
+                            for (i in notificationsUsers) {
+                                Card {
                                     Surface(
                                         modifier = Modifier
                                             .fillMaxWidth(),
@@ -1226,7 +1274,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                             Image(
                                                 i!!.image!!.asImageBitmap(),
                                                 contentDescription = null,
-                                                contentScale= ContentScale.FillBounds,
+                                                contentScale = ContentScale.FillBounds,
                                                 modifier = Modifier
                                                     .size(64.dp)
                                                     .clip(CircleShape)
@@ -1296,7 +1344,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                                                                 .child(i.id)
                                                                 .child("relationship")
                                                                 .setValue(relationShipKey)
-                                                        }else{
+                                                        } else {
                                                             showDialogUserInRelationship = true
                                                             showDialogNotifications = false
                                                         }
@@ -1330,8 +1378,6 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
         Spacer(modifier = Modifier.height(10.dp))
 
 
-
-
         // ... Rest of your content
     }
 }
@@ -1351,10 +1397,10 @@ suspend fun getUserDataFromFirebase(userId: String): Perfil? {
     }
 }
 
-suspend fun getUserDataFromFirebaseWithImage(users: Map<String,String>): List<User?> {
+suspend fun getUserDataFromFirebaseWithImage(users: Map<String, String>): List<User?> {
     val returnUsers = mutableListOf<User?>()
     try {
-        for(i in users){
+        for (i in users) {
             val snapshot = db.reference.child("Users").child(i.value).get().await()
             if (snapshot.exists()) {
                 val perfil = snapshot.getValue(Perfil::class.java)
@@ -1369,7 +1415,15 @@ suspend fun getUserDataFromFirebaseWithImage(users: Map<String,String>): List<Us
                     val byteArray = ref.getBytes(megabytes).await()
                     BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 }
-                returnUsers.add(User(perfil.name, perfil.username, i.value, bitmap,perfil.relationship))
+                returnUsers.add(
+                    User(
+                        perfil.name,
+                        perfil.username,
+                        i.value,
+                        bitmap,
+                        perfil.relationship
+                    )
+                )
             }
         }
     } catch (e: Exception) {
@@ -1379,13 +1433,13 @@ suspend fun getUserDataFromFirebaseWithImage(users: Map<String,String>): List<Us
     return returnUsers
 }
 
-suspend fun searchUserDataFromFirebase(username:String): User? {
+suspend fun searchUserDataFromFirebase(username: String): User? {
     try {
         val snapshot = db.reference.child("Usernames").child(username).get().await()
         if (snapshot.exists()) {
             val userToken = snapshot.getValue(String::class.java)
             val user = db.reference.child("Users").child(userToken!!).get().await()
-            if(user.exists()){
+            if (user.exists()) {
                 val perfil = user.getValue(Perfil::class.java)
                 val bitmap = if (perfil!!.image != "") {
                     val ref = storageRef.child("ProfilePics/${perfil.image}")
@@ -1398,7 +1452,7 @@ suspend fun searchUserDataFromFirebase(username:String): User? {
                     val byteArray = ref.getBytes(megabytes).await()
                     BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 }
-                return User(perfil.name, perfil.username, userToken, bitmap,perfil.relationship)
+                return User(perfil.name, perfil.username, userToken, bitmap, perfil.relationship)
             }
         } else {
             return null

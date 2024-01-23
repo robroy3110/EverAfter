@@ -19,15 +19,20 @@ import cm.everafter.screens.memories.MemoriesScreen
 import cm.everafter.screens.playlist.AddSongsScreen
 import cm.everafter.screens.playlist.PlaylistDetailsScreen
 import cm.everafter.screens.games.GameDetailsScreen
+import cm.everafter.viewModels.LocationViewModel
 
 import cm.everafter.viewModels.UserViewModel
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    notificationService: NotificationService
+    notificationService: NotificationService,
+    currentLocation: LatLng?,
 ) {
     val userViewModel: UserViewModel = viewModel()
+    val locationViewModel: LocationViewModel = viewModel()
+    locationViewModel.currentLocation = currentLocation
     NavHost(
         navController = navController,
         startDestination = Screens.HomeScreen.route)
@@ -39,7 +44,7 @@ fun AppNavigation(
             MemoriesScreen(navController = navController, viewModel= userViewModel)
         }
         composable(route = Screens.CameraScreen.route){
-            FotoScreen(userViewModel)
+            FotoScreen(userViewModel,locationViewModel)
         }
         composable(route = Screens.SearchUserScreen.route){
             SearchUserScreen(navController = navController)
