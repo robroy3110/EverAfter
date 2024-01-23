@@ -61,6 +61,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,12 +69,17 @@ import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import cm.everafter.screens.games.db
+import cm.everafter.viewModels.LocationViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.tasks.await
@@ -81,7 +87,7 @@ import kotlinx.coroutines.tasks.await
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewModel: UserViewModel){
+fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewModel: UserViewModel,locationViewModel : LocationViewModel){
 
     val cameraState: CameraState by cameraViewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -96,8 +102,10 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
     var country by remember { mutableStateOf<String?>("Not Found") }
     var city by remember {mutableStateOf<String?>("Not Found")}
 
-    val fineLocationPermissionState: PermissionState = rememberPermissionState(permission = Manifest.permission.ACCESS_FINE_LOCATION)
-    val geocoder: Geocoder = Geocoder(context,Locale.getDefault())
+    var currentUserLocation by remember { mutableStateOf<LatLng?>(LatLng(0.0,0.0)) }
+
+    val geocoder: Geocoder = Geocoder(context)
+
     Scaffold(
         Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -109,24 +117,24 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                 var picturesPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsPictures").get().await()
                 var totalPointsSnapshot  =  db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("pointsTotal").get().await()
                 // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
-                if (picturesPointsSnapshot.exists()) {
+                pointsPictures = if (picturesPointsSnapshot.exists()) {
                     // Obtém a pontuação dos jogos como uma string
                     val picturePointsString = picturesPointsSnapshot.value.toString()
                     // Converte a string para um inteiro (assumindo que a string representa um número)
-                    pointsPictures = picturePointsString.toIntOrNull() ?: 0
+                    picturePointsString.toIntOrNull() ?: 0
                 } else {
                     // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
-                    pointsPictures = 0
+                    0
                 }
                 // Verifique se o snapshot contém algum valor antes de tentar obter as crianças
-                if (totalPointsSnapshot.exists()) {
+                pointsTotal = if (totalPointsSnapshot.exists()) {
                     // Obtém a pontuação dos jogos como uma string
                     val totalPointsSnapshot = totalPointsSnapshot.value.toString()
                     // Converte a string para um inteiro (assumindo que a string representa um número)
-                    pointsPictures = totalPointsSnapshot.toIntOrNull() ?: 0
+                    totalPointsSnapshot.toIntOrNull() ?: 0
                 } else {
                     // Se não houver dados, defina a pontuação como 0 ou outro valor padrão
-                    pointsPictures = 0
+                    0
                 }
             }
 
@@ -137,20 +145,6 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                 onClick = {
 
                     val mainExecutor = ContextCompat.getMainExecutor(context)
-
-                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-                    if((ActivityCompat.checkSelfPermission(context,
-                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) || fineLocationPermissionState.status.isGranted){
-                        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                        if(location != null){
-                            latitude = location.latitude
-                            longitude = location.longitude
-                            addresses = geocoder.getFromLocation(latitude,longitude,5)
-                            city = addresses?.get(0)?.locality
-                            country = addresses?.get(0)?.countryName
-                        }
-                    }
 
                     cameraController.takePicture(mainExecutor, object: ImageCapture.OnImageCapturedCallback(){
 
@@ -164,18 +158,26 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
 
                             val sdf = getDateInstance()
                             val currentDateAndTime = sdf.format(Date())
-
+                            currentUserLocation = locationViewModel.currentLocation
                             if(city == null){
                                 city = "Not Found"
                             }
                             if(country == null){
                                 country = "Not Found"
                             }
+                            if(currentUserLocation == null){
+                                currentUserLocation = LatLng(0.0,0.0)
+                            }
+                            addresses = geocoder.getFromLocation(currentUserLocation!!.latitude,currentUserLocation!!.longitude,5)
+                            if(!addresses.isNullOrEmpty()){
+                                city = addresses?.get(0)?.locality
+                                country = addresses?.get(0)?.countryName
+                            }
 
                             val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${System.currentTimeMillis()}")
 
                             riversRef.putBytes(imageBytes,
-                                StorageMetadata.Builder().setCustomMetadata("Coordinates","$latitude, $longitude").setCustomMetadata("Location","$city, $country").build())
+                                StorageMetadata.Builder().setCustomMetadata("Coordinates","${currentUserLocation!!.latitude}, ${currentUserLocation!!.longitude}").setCustomMetadata("Location","$city, $country").build())
 
                             cameraViewModel.storePhoto(bitmapImage)
 
@@ -247,6 +249,59 @@ private fun LastPhotoPreview(
             contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
     }
+}
+
+class CameraScreenLocation(context: Context){
+    lateinit var locationCallback: LocationCallback
+    //The main entry point for interacting with the Fused Location Provider
+    var locationProvider: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    var currentUserLocation : LatLng = LatLng(0.0,0.0)
+
+    fun getLocation(context: Context) : LatLng{
+
+            locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+
+                    /**
+                     * Option 1
+                     * This option returns the locations computed, ordered from oldest to newest.
+                     * */
+                    for (location in result.locations) {
+                        // Update data class with location data
+                        currentUserLocation = LatLng(location.latitude, location.longitude)
+                        Log.d("LOCATION_TAG", "${location.latitude},${location.longitude}")
+                    }
+
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+
+                    }
+                    locationProvider.lastLocation
+                        .addOnSuccessListener { location ->
+                            location?.let {
+                                val lat = location.latitude
+                                val long = location.longitude
+                                // Update data class with location data
+                                currentUserLocation = LatLng(lat, long)
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("Location_error", "${it.message}")
+                        }
+
+                }
+            }
+
+        return currentUserLocation
+
+    }
+
 }
 
 

@@ -32,12 +32,12 @@ import cm.everafter.navigation.NavItem
 import cm.everafter.navigation.Screens
 
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.google.android.gms.maps.model.LatLng
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EverAfter(notificationService: NotificationService) {
+fun EverAfter(notificationService: NotificationService, currentLocation: LatLng?) {
     val context = LocalContext.current
-
     val listOfNavItems = listOf(
         NavItem(
             label = "Home",
@@ -82,6 +82,7 @@ fun EverAfter(notificationService: NotificationService) {
                 AppNavigation(
                     navController = navController,
                     notificationService = notificationService,
+                    currentLocation = currentLocation
                 )
             }
         }
@@ -124,7 +125,7 @@ fun EverAfter(notificationService: NotificationService) {
                     .padding(it)
             ) {
 
-                AppNavigation(navController = navController, notificationService)
+                AppNavigation(navController = navController, notificationService, currentLocation)
             }
         }
     }
