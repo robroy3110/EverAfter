@@ -144,6 +144,7 @@ fun AllGamesView(
 
             ) {
             var games by remember { mutableStateOf(emptyList<Game>()) }
+
             val gamesRef = db.getReference("Games")
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -156,7 +157,6 @@ fun AllGamesView(
                 // Verifica se a data de hoje está entre free_start_date e free_end_date
                 currentDate in startDate..endDate
             }
-
 
             LaunchedEffect(gamesRef) {
                 gamesRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -217,7 +217,7 @@ fun FavoriteGamesView(
         LazyColumn (
             modifier = modifier
                 .fillMaxSize()
-                .padding(top = 80.dp)
+                .padding(top = 100.dp)
         ) {
             itemsIndexed(games) { index, game ->
                 viewModel.loggedInUser?.let { it1 ->

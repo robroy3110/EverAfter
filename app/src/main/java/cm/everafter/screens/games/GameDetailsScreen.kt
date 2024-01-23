@@ -1,11 +1,14 @@
 package cm.everafter.screens.games
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +40,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import cm.everafter.R
 import cm.everafter.classes.Game
+import cm.everafter.screens.home.calcularDiferencaDias
 import cm.everafter.ui.theme.EverAfterTheme
 import cm.everafter.viewModels.GameViewModel
 import coil.compose.AsyncImage
@@ -55,6 +59,7 @@ fun GameDetailsScreen(
 ) {
     // Obter o estado do gameDetails do viewModel
     val gameDetails by viewModel.gameDetails.collectAsState()
+    val context = LocalContext.current
 
     DisposableEffect(gameId) {
         viewModel.getGameDetails(gameId)
@@ -70,7 +75,7 @@ fun GameDetailsScreen(
             gameDetails?.let { game ->
                 TopAppBar(
                     title = {
-                        Text(text = game.title)
+                        Text(text = game.title, fontWeight = FontWeight.Bold)
                     },
                     navigationIcon = {
                         IconButton(onClick = {
@@ -115,7 +120,7 @@ fun GameDetailsScreen(
                     // Data de início do jogo grátis e botão "Claim"
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val freeEndDate = dateFormat.parse(game.free_end_date) ?: Date() // Altere conforme necessário
-                    Log.i("TESTEEEEEEEEEEEEEEEE", game.shortDescription)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -123,15 +128,41 @@ fun GameDetailsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Free until ${dateFormat.format(freeEndDate)}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Button(onClick = { /* Ação de reivindicar */ }) {
+                        Button(onClick = {
+                            // Ação de reivindicar
+                            val url = game.game_url
+
+                            // Cria uma Intent para abrir o navegador
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+
+                            // Inicia a Intent
+                            context.startActivity(intent)
+                        }) {
                             Text(text = "Claim", fontWeight = FontWeight.Bold, fontSize = 24.sp)
                         }
+
                     }
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(text = game.shortDescription, fontWeight = FontWeight.Normal, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp)
+                            .background(
+                                color = Color(0xFFD9D9D9), // Color D9D9D9
+                                shape = RoundedCornerShape(12.dp) // Adjust the corner radius as needed
+                            )
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = game.short_description,
+                            modifier = Modifier.wrapContentSize(),
+                            fontSize = 18.sp
+                        )
+                    }
                 }
 
                 item {
@@ -151,39 +182,41 @@ fun InformationSection(game: Game) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(start = 16.dp)
     ) {
 
-        InformationItem(icon = Icons.Filled.PlayArrow, label = "Gênero", value = game.shortDescription)
-        InformationItem(icon = Icons.Filled.PlayArrow, label = "Gênero", value = game.genre)
-        InformationItem(icon = Icons.Filled.Visibility, label = "Plataforma", value = game.platform)
-        InformationItem(icon = Icons.Filled.Info, label = "Desenvolvedor", value = game.developer)
-        InformationItem(icon = Icons.Filled.Warning, label = "Editora", value = game.publisher)
+        InformationItem(label = "Genre", value = game.genre)
+        InformationItem(label = "Platform", value = game.platform)
+        InformationItem(label = "Developer", value = game.developer)
+        InformationItem(label = "Publisher", value = game.publisher)
+        InformationItem(label = "Release Date", value = game.release_date)
 
         // Adicione mais informações conforme necessário
     }
 }
 
 @Composable
-fun InformationItem(icon: ImageVector, label: String, value: String) {
+fun InformationItem(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 8.dp) // Ajuste o padding conforme necessário
     ) {
-        // Ícone
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier
-                .size(24.dp)
-                .padding(end = 8.dp)
-        )
-
         // Rótulo e valor
-        Column {
-            Text(text = label, style = typography.body2)
-            Text(text = value, style = typography.body1)
+        Column(
+            modifier = Modifier.padding(start = 16.dp) // Adicione padding à Column
+        ) {
+            Text(
+                text = label,
+                style = typography.h6, // Ajuste o tamanho da fonte conforme necessário
+                modifier = Modifier.padding(bottom = 4.dp) // Adicione padding inferior à label
+            )
+            Text(
+                text = value,
+                style = typography.body1,
+                modifier = Modifier.padding(bottom = 4.dp) // Adicione padding inferior ao value
+            )
         }
     }
 }
+

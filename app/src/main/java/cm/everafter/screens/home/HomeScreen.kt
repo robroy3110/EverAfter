@@ -634,8 +634,8 @@ fun HomeScreenRelation(
             }
 
             item {
-                Text(modifier = Modifier.padding(start = 16.dp), text = "Dates", fontWeight = FontWeight.Bold,)
-                RelationshipProgressBar(relationShip!!.pointsDate, "Dates")
+                /*Text(modifier = Modifier.padding(start = 16.dp), text = "Dates", fontWeight = FontWeight.Bold,)
+                RelationshipProgressBar(relationShip!!.pointsDate, "Dates")*/
 
                 Text(modifier = Modifier.padding(start = 16.dp), text = "Music", fontWeight = FontWeight.Bold,)
                 RelationshipProgressBar(relationShip!!.pointsMusic, "Music")
