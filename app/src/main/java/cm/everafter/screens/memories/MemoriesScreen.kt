@@ -225,7 +225,9 @@ fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
             .fillMaxSize()
             .padding(top = 100.dp, start = 16.dp, end = 16.dp)
     ) {
-        photosByDate.entries.forEachIndexed { index, entry ->
+        photosByDate.entries
+            .sortedByDescending { it.key }
+            .forEachIndexed { index, entry ->
             val (date, photoList) = entry
 
             item {

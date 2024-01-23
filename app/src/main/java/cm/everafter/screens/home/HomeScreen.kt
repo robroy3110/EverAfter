@@ -898,7 +898,7 @@ fun HomeScreenNoRelation(modifier: Modifier, navController: NavController, thisU
                 .height(4.dp)
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(200.dp))
 
         // Couple pics Section
         Row(
