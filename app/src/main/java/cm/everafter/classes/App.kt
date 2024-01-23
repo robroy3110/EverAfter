@@ -48,8 +48,8 @@ class App : Application() {
     private fun initializeGameWorkManager() {
         // Configura a hora para 18:00:00 todos os dias
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 18)
-        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.HOUR_OF_DAY, 14)
+        calendar.set(Calendar.MINUTE, 30)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
 

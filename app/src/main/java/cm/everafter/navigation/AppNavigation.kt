@@ -18,6 +18,7 @@ import cm.everafter.screens.home.Register
 import cm.everafter.screens.memories.MemoriesScreen
 import cm.everafter.screens.playlist.AddSongsScreen
 import cm.everafter.screens.playlist.PlaylistDetailsScreen
+import cm.everafter.screens.games.GameDetailsScreen
 
 import cm.everafter.viewModels.UserViewModel
 
@@ -47,8 +48,16 @@ fun AppNavigation(
             ProfileScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.GamesScreen.route){
-            GamesScreen(navController = navController, notificationService, viewModel = userViewModel)
+            GamesScreen(navController = navController, viewModel = userViewModel)
         }
+        composable(route = "${Screens.GameDetailsScreen.route}/{title}") { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("title")
+            if (gameId != null) {
+                GameDetailsScreen(navController = navController, viewModel = viewModel(), gameId = gameId)
+            }
+        }
+
+
         composable(route = Screens.PlaylistScreen.route){
             PlayListScreen(navController = navController, userViewModel = userViewModel)
         }

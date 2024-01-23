@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import cm.everafter.NotificationService
 import cm.everafter.classes.Game
+import cm.everafter.navigation.Screens
 import cm.everafter.screens.home.auth
 import cm.everafter.viewModels.UserViewModel
 import coil.compose.AsyncImage
@@ -83,7 +84,6 @@ sealed class GamesView {
 @Composable
 fun GamesScreen(
     navController: NavController,
-    notificationService: NotificationService,
     viewModel: UserViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -119,10 +119,10 @@ fun GamesScreen(
     ) { paddingValues ->
         when (selectedView) {
             is GamesView.AllGamesView -> {
-                AllGamesView(navController, notificationService, viewModel, modifier)
+                AllGamesView(navController, viewModel, modifier)
             }
             is GamesView.FavoriteGamesView -> {
-                FavoriteGamesView(navController, notificationService, viewModel, modifier)
+                FavoriteGamesView(navController, viewModel, modifier)
             }
         }
     }
@@ -133,7 +133,6 @@ fun GamesScreen(
 @Composable
 fun AllGamesView(
     navController: NavController,
-    notificationService: NotificationService,
     viewModel: UserViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -174,16 +173,26 @@ fun AllGamesView(
                 })
             }
 
+
             LazyColumn (
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(top = 80.dp)
+                    .padding(top = 100.dp)
             ) {
                 itemsIndexed(freeGamesToday) { index, game ->
-                    viewModel.loggedInUser?.let { it1 -> GameItem(game = game, it1.relationship) }
+                    viewModel.loggedInUser?.let {
+                        GameItem(
+                            game = game,
+                            relationship = it.relationship,
+                            onClick = {
+                                // Navegar para a tela de detalhes do jogo quando o item for clicado
+                                navController.navigate("${Screens.GameDetailsScreen.route}/${game.title}")
+                            }
+                        )
+                    }
                 }
-
             }
+
 
         }
 }
@@ -191,7 +200,6 @@ fun AllGamesView(
 @Composable
 fun FavoriteGamesView(
     navController: NavController,
-    notificationService: NotificationService,
     viewModel: UserViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -225,89 +233,96 @@ fun FavoriteGamesView(
 
     }
 
-
 }
 
 
 @Composable
-fun GameItem(game: Game, relationship: String) {
-
-    var isFavorited by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        val game = db.reference.child("Relationships").child(relationship).child("favgames").child(game.title).get().await()
-        isFavorited = game.exists()
-    }
+fun GameItem(game: Game, relationship: String, onClick: () -> Unit) {
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFD9D9D9)),
-        contentAlignment = Alignment.Center
+            .clickable { onClick() }
     ) {
-        Card(
-            shape = RoundedCornerShape(8.dp),
+
+        var isFavorited by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            val game = db.reference.child("Relationships").child(relationship).child("favgames")
+                .child(game.title).get().await()
+            isFavorited = game.exists()
+        }
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(8.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFFD9D9D9)),
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                AsyncImage(
-                    model = game.thumbnail,
-                    contentDescription = "Translated description of what the image contains",
-                    modifier = Modifier
-                        .size(85.dp) // Defina o tamanho da imagem conforme necessário
-                        .clip(shape = RoundedCornerShape(4.dp)) // Adiciona bordas arredondadas à imagem
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Defina um width fixo para a Column que contém o título
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp)
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = game.title,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2, // Define o número máximo de linhas para o título
-                        overflow = TextOverflow.Ellipsis // Adiciona reticências (...) quando o texto é cortado
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    AsyncImage(
+                        model = game.thumbnail,
+                        contentDescription = "Translated description of what the image contains",
+                        modifier = Modifier
+                            .size(85.dp) // Defina o tamanho da imagem conforme necessário
+                            .clip(shape = RoundedCornerShape(4.dp)) // Adiciona bordas arredondadas à imagem
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp)) // Adiciona espaçamento vertical
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                    Text(
-                        text = game.genre,
-                        fontWeight = FontWeight.Normal
-                    )
-                }
+                    // Defina um width fixo para a Column que contém o título
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = game.title,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2, // Define o número máximo de linhas para o título
+                            overflow = TextOverflow.Ellipsis // Adiciona reticências (...) quando o texto é cortado
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp)) // Adiciona espaçamento vertical
+
+                        Text(
+                            text = game.genre,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
 
 
-                // Adicione o ícone clicável para adicionar/remover dos favoritos
-                Icon(
-                    imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
-                    tint = if (isFavorited) Color.Red else Color.Gray,
-                    modifier = Modifier.size(24.dp) // Define o tamanho do ícone
-                        .clickable {
-                            if (isFavorited) {
-                                removeFromFavGames(relationship, game.title)
-                            } else {
-                                addToFavGames(relationship, game.title)
+                    // Adicione o ícone clicável para adicionar/remover dos favoritos
+                    Icon(
+                        imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
+                        tint = if (isFavorited) Color.Red else Color.Gray,
+                        modifier = Modifier.size(24.dp) // Define o tamanho do ícone
+                            .clickable {
+                                if (isFavorited) {
+                                    removeFromFavGames(relationship, game.title)
+                                } else {
+                                    addToFavGames(relationship, game.title)
+                                }
+                                // Alterne o estado de favoritos
+                                isFavorited = !isFavorited
                             }
-                            // Alterne o estado de favoritos
-                            isFavorited = !isFavorited
-                        }
-                )
+                    )
 
+                }
             }
         }
     }
