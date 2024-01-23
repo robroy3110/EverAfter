@@ -929,8 +929,6 @@ fun HomeScreenNoRelation(
                 .height(4.dp)
         )
 
-        Spacer(modifier = Modifier.height(200.dp))
-
         // Couple pics Section
         Row(
             modifier = Modifier
@@ -1266,6 +1264,7 @@ fun HomeScreenNoRelation(
                                             .fillMaxWidth(),
                                         shape = MaterialTheme.shapes.medium
                                     ) {
+                                        
                                         Row(
                                             modifier = Modifier
                                                 .padding(16.dp)

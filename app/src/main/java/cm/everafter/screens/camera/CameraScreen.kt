@@ -96,8 +96,6 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
     val lastCapturedPhoto : Bitmap? = cameraState.capturedImage
     val storage = Firebase.storage("gs://everafter-382e1.appspot.com")
     val storageRef = storage.reference
-    var latitude by remember { mutableDoubleStateOf(0.0) }
-    var longitude by remember { mutableDoubleStateOf(0.0) }
     var addresses by remember {mutableStateOf<List<Address>?>(mutableListOf())}
     var country by remember { mutableStateOf<String?>("Not Found") }
     var city by remember {mutableStateOf<String?>("Not Found")}
@@ -193,30 +191,30 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                         }
                     })
 
-                    })
+                })
         }
 
     ) {  paddingValues: PaddingValues ->
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-            PreviewView(context).apply{
-                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-                setBackgroundColor(Color.BLACK)
-                scaleType = PreviewView.ScaleType.FILL_START
-                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-            }.also{previewView ->
-                previewView.controller = cameraController
-                cameraController.bindToLifecycle(lifeCycleOwner)
-            }
+                PreviewView(context).apply{
+                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                    setBackgroundColor(Color.BLACK)
+                    scaleType = PreviewView.ScaleType.FILL_START
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                }.also{previewView ->
+                    previewView.controller = cameraController
+                    cameraController.bindToLifecycle(lifeCycleOwner)
+                }
 
-        })
+            })
         if (lastCapturedPhoto != null) {
             Box(modifier = Modifier){
                 LastPhotoPreview(
-                modifier = Modifier.align(BottomStart),
-                lastCapturedPhoto = lastCapturedPhoto
-            )}
+                    modifier = Modifier.align(BottomStart),
+                    lastCapturedPhoto = lastCapturedPhoto
+                )}
 
         }
 
@@ -259,44 +257,44 @@ class CameraScreenLocation(context: Context){
 
     fun getLocation(context: Context) : LatLng{
 
-            locationCallback = object : LocationCallback() {
-                override fun onLocationResult(result: LocationResult) {
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
 
-                    /**
-                     * Option 1
-                     * This option returns the locations computed, ordered from oldest to newest.
-                     * */
-                    for (location in result.locations) {
-                        // Update data class with location data
-                        currentUserLocation = LatLng(location.latitude, location.longitude)
-                        Log.d("LOCATION_TAG", "${location.latitude},${location.longitude}")
-                    }
+                /**
+                 * Option 1
+                 * This option returns the locations computed, ordered from oldest to newest.
+                 * */
+                for (location in result.locations) {
+                    // Update data class with location data
+                    currentUserLocation = LatLng(location.latitude, location.longitude)
+                    Log.d("LOCATION_TAG", "${location.latitude},${location.longitude}")
+                }
 
-                    if (ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-
-                    }
-                    locationProvider.lastLocation
-                        .addOnSuccessListener { location ->
-                            location?.let {
-                                val lat = location.latitude
-                                val long = location.longitude
-                                // Update data class with location data
-                                currentUserLocation = LatLng(lat, long)
-                            }
-                        }
-                        .addOnFailureListener {
-                            Log.e("Location_error", "${it.message}")
-                        }
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
 
                 }
+                locationProvider.lastLocation
+                    .addOnSuccessListener { location ->
+                        location?.let {
+                            val lat = location.latitude
+                            val long = location.longitude
+                            // Update data class with location data
+                            currentUserLocation = LatLng(lat, long)
+                        }
+                    }
+                    .addOnFailureListener {
+                        Log.e("Location_error", "${it.message}")
+                    }
+
             }
+        }
 
         return currentUserLocation
 
