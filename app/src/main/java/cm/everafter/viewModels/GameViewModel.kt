@@ -16,8 +16,8 @@ class GameViewModel : ViewModel() {
     val gameDetails: StateFlow<Game?> = _gameDetails
 
     fun getGameDetails(gameId: String) {
-        val database = FirebaseDatabase.getInstance("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
-        val gamesRef = database.getReference("FreeGames")
+        val db = FirebaseDatabase.getInstance("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
+        val gamesRef = db.getReference("FreeGames")
 
         // Query to get the game with the specified ID
         val query = gamesRef.child(gameId)

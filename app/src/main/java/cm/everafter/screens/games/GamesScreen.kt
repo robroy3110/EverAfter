@@ -145,7 +145,6 @@ fun AllGamesView(
             ) {
             var games by remember { mutableStateOf(emptyList<Game>()) }
             val gamesRef = db.getReference("Games")
-
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
             val freeGamesToday = games.filter { game ->
@@ -192,7 +191,6 @@ fun AllGamesView(
                     }
                 }
             }
-
 
         }
 }

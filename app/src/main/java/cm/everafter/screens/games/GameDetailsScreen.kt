@@ -1,6 +1,7 @@
 package cm.everafter.screens.games
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
@@ -39,6 +42,10 @@ import cm.everafter.viewModels.GameViewModel
 import coil.compose.AsyncImage
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameDetailsScreen(
@@ -85,43 +92,58 @@ fun GameDetailsScreen(
                 item {
                     // Exibição da imagem do jogo (se disponível)
                     if (game.thumbnail.isNotEmpty()) {
-                        AsyncImage(
-                            model = game.thumbnail,
-                            contentDescription = "Translated description of what the image contains",
+                        Box(
                             modifier = Modifier
-                                .size(125.dp) // Defina o tamanho da imagem conforme necessário
-                                .clip(shape = RoundedCornerShape(4.dp)) // Adiciona bordas arredondadas à imagem
-                        )
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            AsyncImage(
+                                model = game.thumbnail,
+                                contentDescription = "Translated description of what the image contains",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp) // Defina a altura da imagem conforme necessário
+                                    .clip(shape = RoundedCornerShape(16.dp)) // Adiciona bordas arredondadas à imagem
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .align(Alignment.Center)
+                            )
+                        }
                     }
                 }
 
                 item {
-                    // Título do jogo
-                    Text(
-                        text = game.title,
-                        style = typography.h5,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    // Data de início do jogo grátis e botão "Claim"
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val freeEndDate = dateFormat.parse(game.free_end_date) ?: Date() // Altere conforme necessário
+                    Log.i("TESTEEEEEEEEEEEEEEEE", game.shortDescription)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Free until ${dateFormat.format(freeEndDate)}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Button(onClick = { /* Ação de reivindicar */ }) {
+                            Text(text = "Claim", fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                        }
+                    }
                 }
 
                 item {
-                    // Descrição curta do jogo
-                    Text(
-                        text = game.shortDescription,
-                        style = typography.body1,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(text = game.shortDescription, fontWeight = FontWeight.Normal, fontSize = 18.sp)
                 }
 
                 item {
                     // Outras informações do jogo
                     InformationSection(game = game)
                 }
+
             }
         }
     }
 }
+
 
 
 @Composable
@@ -131,11 +153,12 @@ fun InformationSection(game: Game) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
+
+        InformationItem(icon = Icons.Filled.PlayArrow, label = "Gênero", value = game.shortDescription)
         InformationItem(icon = Icons.Filled.PlayArrow, label = "Gênero", value = game.genre)
         InformationItem(icon = Icons.Filled.Visibility, label = "Plataforma", value = game.platform)
         InformationItem(icon = Icons.Filled.Info, label = "Desenvolvedor", value = game.developer)
         InformationItem(icon = Icons.Filled.Warning, label = "Editora", value = game.publisher)
-        InformationItem(icon = Icons.Filled.DateRange, label = "Data de Lançamento", value = game.releaseDate)
 
         // Adicione mais informações conforme necessário
     }
