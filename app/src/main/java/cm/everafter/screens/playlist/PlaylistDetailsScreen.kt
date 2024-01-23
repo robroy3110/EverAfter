@@ -367,7 +367,7 @@ fun PlaylistDetailsScreen(
                             if(otheruser[0] == '1') {
                                 db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed2").setValue(song.name)
 
-                                if(relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) {
+                                if((relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) && (relationShip!!.lastsongplayed1 != "" && relationShip!!.lastsongplayed2 != "")) {
                                     showToast = true
                                     pointsTotal += 28
                                     pointsMusic += 28
@@ -378,7 +378,7 @@ fun PlaylistDetailsScreen(
                             } else {
                                 db.reference.child("Relationships").child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed1").setValue(song.name)
 
-                                if(relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) {
+                                if((relationShip!!.lastsongplayed1 == relationShip!!.lastsongplayed2) && (relationShip!!.lastsongplayed1 != "" && relationShip!!.lastsongplayed2 != "")) {
                                     showToast = true
                                     pointsTotal += 28
                                     pointsMusic += 28
