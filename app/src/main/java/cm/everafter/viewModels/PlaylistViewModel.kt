@@ -73,9 +73,10 @@ class PlaylistViewModel : ViewModel() {
     }
 
     // Function to play a song
+// Function to play a song
     fun playSong(song: Song) {
-        mediaPlayer?.reset()
-        Log.e("MediaPlayer", "Deu RESET: ")
+        mediaPlayer?.release()
+        Log.e("MediaPlayer", "Released previous MediaPlayer instance")
 
         mediaPlayer = MediaPlayer().apply {
             // Assuming storagePath is a Firebase Cloud Storage path
@@ -84,6 +85,8 @@ class PlaylistViewModel : ViewModel() {
             storageReference.downloadUrl.addOnSuccessListener { uri ->
                 try {
                     setDataSource(uri.toString())
+                    // Set the playback rate - 1.0f represents normal playback rate
+                    playbackParams = playbackParams.setSpeed(1.0f)
                     prepare()
                     start()
                     Log.e("MediaPlayer", "Started Song!")
@@ -102,6 +105,7 @@ class PlaylistViewModel : ViewModel() {
         }
     }
 
+
     // Function to get the relative path from a full URL
     private fun getRelativePath(fullUrl: String): String {
         val uri = Uri.parse(fullUrl)
@@ -112,6 +116,8 @@ class PlaylistViewModel : ViewModel() {
     // Function to stop playback
     fun stopPlayback() {
         mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
     // Release resources when the ViewModel is cleared
@@ -163,9 +169,6 @@ class PlaylistViewModel : ViewModel() {
         })
     }
 
-
-
-    // Inside PlaylistViewModel class
     fun deletePlaylist(playlistName: String) {
         val database = Firebase.database("https://everafter-382e1-default-rtdb.europe-west1.firebasedatabase.app/")
         val playlistsRef = database.getReference("Playlists")
@@ -262,16 +265,14 @@ class PlaylistViewModel : ViewModel() {
         })
     }
 
-    fun updatePlaylistImageUri(playlistName: String, fileName: String) {
-        val storageRef = storage.reference.child("PlaylistsPics/$fileName")
-
-        // Get the download URL for the image
-        storageRef.downloadUrl.addOnSuccessListener { uri ->
-            // Update the playlist image URI in the database with the full URL
-            updatePlaylistImage(playlistName, uri.toString())
-        }.addOnFailureListener { exception ->
-            // Handle the failure to get the download URL
-            println("Couldn't get the download URL for the uploaded image: ${exception.message}")
+    // Function to play a playlist
+    fun playPlaylist(playlist: Playlist) {
+        // Assuming playlist.songs is a list of Song objects in the desired order
+        playlist.songs?.let { songs ->
+            for (song in songs) {
+                playSong(song)
+                // You might want to add a delay here if needed
+            }
         }
     }
 

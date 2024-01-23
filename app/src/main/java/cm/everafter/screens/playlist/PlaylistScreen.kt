@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
@@ -247,15 +249,24 @@ fun PlayListScreen(
                 // Display regular playlist item
                 PlaylistItem(
                     playlist = playlist,
-                    storageRef = storageRef,  // Pass the storage reference
+                    storageRef = storageRef,
                     onPlaylistClick = { playlist ->
                         navController.navigate("${Screens.PlaylistDetailsScreen.route}/${playlist.name}")
+                    },
+                    onPlayButtonClick = { playlist ->
+                        // Implement play functionality here
+                        playlistViewModel.playPlaylist(playlist)
+                    },
+                    onStopButtonClick = {
+                        // Implement stop functionality here
+                        playlistViewModel.stopPlayback()
                     }
                 )
                 // Add spacing between playlists
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
     }
 }
 
@@ -283,14 +294,20 @@ fun PlaylistImage(playlist: Playlist, storageRef: StorageReference) {
             bitmap = imageBitmap!!.asImageBitmap(),
             contentDescription = null,
             modifier = Modifier
-                .size(64.dp)
+                .size(80.dp)
                 .clip(MaterialTheme.shapes.medium)
         )
     }
 }
 
 @Composable
-fun PlaylistItem(playlist: Playlist, storageRef: StorageReference, onPlaylistClick: (Playlist) -> Unit) {
+fun PlaylistItem(
+    playlist: Playlist,
+    storageRef: StorageReference,
+    onPlaylistClick: (Playlist) -> Unit,
+    onPlayButtonClick: (Playlist) -> Unit,
+    onStopButtonClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
@@ -304,28 +321,49 @@ fun PlaylistItem(playlist: Playlist, storageRef: StorageReference, onPlaylistCli
         // Display playlist image if available
         PlaylistImage(playlist = playlist, storageRef = storageRef)
 
-        // Display playlist name and edit button
-        Row(
+        // Display playlist name
+        Text(
+            text = playlist.name,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(start = 8.dp)
+        )
+
+        // Play and stop buttons
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = playlist.name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-            )
+            // Play button
+            IconButton(
+                onClick = { onPlayButtonClick.invoke(playlist) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play",
+                    tint = Color(0xFF8C52FF)
+                )
+            }
+
+            // Stop button
+            IconButton(
+                onClick = { onStopButtonClick.invoke() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = "Stop",
+                    tint = Color(0xFF8C52FF)
+                )
+            }
         }
     }
 }
 
 
 @Composable
-fun Column(modifier: Modifier, content: () -> Unit) {
-
-}
+fun Column(modifier: Modifier, content: () -> Unit) {}
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
