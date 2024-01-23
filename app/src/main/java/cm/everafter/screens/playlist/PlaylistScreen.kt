@@ -1,4 +1,5 @@
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -32,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -69,6 +71,7 @@ import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayListScreen(
@@ -91,184 +94,189 @@ fun PlayListScreen(
     var playlists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     var showDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(20.dp)
-    ) {
-        // Top Section: 'Our Library' and Search Bar
-        Text(
-            text = "Our Library",
-            fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
-            modifier = Modifier.padding(bottom = 14.dp)
-        )
-
-        // Divider line with the same color as the search bar
-        Divider(
-            color = Color(0xFF8C52FF), // Changed to the desired color
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Show the dialog when showDialog is true
-            if (showDialog) {
-                showAddPlaylistDialog(userViewModel = userViewModel, onDismiss = { showDialog = false })
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        /* ------------------------------------- ADDING PLAYLISTS  ------------------------------------- */
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Check if the user has a relationship before showing the add playlist button
-            if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
-                Text(
-                    text = "Playlists",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-                // Add Playlist Button
-                IconButton(
-                    onClick = {
-                        // Open the dialog when the button is clicked
-                        showDialog = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Playlist",
-                        tint = Color(0xFF8C52FF),
-                    )
-                }
-            }
-            // Show the message only if the user's relationship is null or empty
-            if (userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
-                // Display the "couple.png" image along with the message
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .padding(8.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.couple), // Replace R.drawable.couple1 with your actual resource ID
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(150.dp)
-                                .padding(end = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Join a relationship to create a Shared Playlist!",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Check if there are playlists associated with the user's relationship otherwise show special msg
-        if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty() && playlists.isEmpty()) {
-            Box(
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        content = {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
-                contentAlignment = Alignment.Center
+                    .padding(20.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Create your first Shared Playlist!",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.couple1),
-                        contentDescription = null,
-                        modifier = Modifier.size(150.dp)
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
-        /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
-        // Retrieve playlists from the database
-        DisposableEffect(Unit) {
-            val playlistsListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val newPlaylists = snapshot.children.mapNotNull { it.getValue(Playlist::class.java) }
-                        .filter { it.relationship == userViewModel.loggedInUser?.relationship }
-                    playlists = newPlaylists
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            }
-
-            playlistsRef.addValueEventListener(playlistsListener)
-
-            onDispose {
-                playlistsRef.removeEventListener(playlistsListener)
-            }
-        }
-        // Display playlists
-        LazyColumn {
-            items(playlists) { playlist ->
-                // Display regular playlist item
-                PlaylistItem(
-                    playlist = playlist,
-                    storageRef = storageRef,
-                    onPlaylistClick = { playlist ->
-                        navController.navigate("${Screens.PlaylistDetailsScreen.route}/${playlist.name}")
-                    },
-                    onPlayButtonClick = { playlist ->
-                        // Implement play functionality here
-                        playlistViewModel.playPlaylist(playlist)
-                    },
-                    onStopButtonClick = {
-                        // Implement stop functionality here
-                        playlistViewModel.stopPlayback()
-                    }
+                // Top Section: 'Our Library'
+                Text(
+                    text = "Our Library",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    modifier = Modifier.padding(bottom = 14.dp)
                 )
-                // Add spacing between playlists
+
+                // Divider line with the same color as the search bar
+                Divider(
+                    color = Color(0xFF8C52FF), // Changed to the desired color
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Show the dialog when showDialog is true
+                    if (showDialog) {
+                        showAddPlaylistDialog(userViewModel = userViewModel, onDismiss = { showDialog = false })
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                /* ------------------------------------- ADDING PLAYLISTS  ------------------------------------- */
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Check if the user has a relationship before showing the add playlist button
+                    if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
+                        Text(
+                            text = "Playlists",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        // Add Playlist Button
+                        IconButton(
+                            onClick = {
+                                // Open the dialog when the button is clicked
+                                showDialog = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add Playlist",
+                                tint = Color(0xFF8C52FF),
+                            )
+                        }
+                    }
+                    // Show the message only if the user's relationship is null or empty
+                    if (userViewModel.loggedInUser?.relationship.isNullOrEmpty()) {
+                        // Display the "couple.png" image along with the message
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.couple), // Replace R.drawable.couple1 with your actual resource ID
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(150.dp)
+                                        .padding(end = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Join a relationship to create a Shared Playlist!",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Check if there are playlists associated with the user's relationship otherwise show special msg
+                if (!userViewModel.loggedInUser?.relationship.isNullOrEmpty() && playlists.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = "Create your first Shared Playlist!",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Image(
+                                painter = painterResource(id = R.drawable.couple1),
+                                contentDescription = null,
+                                modifier = Modifier.size(150.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
+
+                /* ------------------------------------- PLAYLISTS OF DB ------------------------------------- */
+                // Retrieve playlists from the database
+                DisposableEffect(Unit) {
+                    val playlistsListener = object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val newPlaylists = snapshot.children.mapNotNull { it.getValue(Playlist::class.java) }
+                                .filter { it.relationship == userViewModel.loggedInUser?.relationship }
+                            playlists = newPlaylists
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {}
+                    }
+
+                    playlistsRef.addValueEventListener(playlistsListener)
+
+                    onDispose {
+                        playlistsRef.removeEventListener(playlistsListener)
+                    }
+                }
+                // Display playlists
+                LazyColumn {
+                    items(playlists) { playlist ->
+                        // Display regular playlist item
+                        PlaylistItem(
+                            playlist = playlist,
+                            storageRef = storageRef,
+                            onPlaylistClick = { playlist ->
+                                navController.navigate("${Screens.PlaylistDetailsScreen.route}/${playlist.name}")
+                            },
+                            onPlayButtonClick = { playlist ->
+                                // Implement play functionality here
+                                playlistViewModel.playPlaylist(playlist)
+                            },
+                            onStopButtonClick = {
+                                // Implement stop functionality here
+                                playlistViewModel.stopPlayback()
+                            }
+                        )
+                        // Add spacing between playlists
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
             }
         }
-
-    }
+    )
 }
+
 
 @Composable
 fun PlaylistImage(playlist: Playlist, storageRef: StorageReference) {
