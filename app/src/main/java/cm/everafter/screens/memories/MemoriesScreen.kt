@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -110,7 +112,7 @@ fun MemoriesScreen(
     ) { paddingValues ->
         when (selectedView) {
             is MemoriesView.CalendarPhotoView -> {
-                CalendarPhotoView(paddingValues)
+                CalendarPhotoView(paddingValues, viewModel.loggedInUser!!.relationship)
             }
             is MemoriesView.PhotoGridView -> {
                 PhotoGridView(paddingValues, viewModel.loggedInUser!!.relationship)
@@ -122,7 +124,7 @@ fun MemoriesScreen(
     }
 }
 
-@Composable
+/*@Composable
 fun CalendarPhotoView(paddingValues: PaddingValues) {
 
     var date by remember {
@@ -147,14 +149,21 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
             })
         Text(text = date)
     }
-}
+}*/
 
 
-/*
+
 @Composable
-fun CalendarPhotoView(paddingValues: PaddingValues) {
+fun CalendarPhotoView(paddingValues: PaddingValues, relationShip: String) {
     var selectedDate by remember { mutableStateOf<Date?>(null) }
-    val photosByDate = // Mapa que associa Date a URL da foto, ou algo similar
+    var photosByDate by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+    val storageRef = cm.everafter.screens.home.storageRef.child("Memories/${relationShip}")
+    // Carregar URLs das imagens ao iniciar a composição
+    DisposableEffect(storageRef) {
+        val imageUrlsWithNames = runBlocking { getImageUrlsWithNames(storageRef) }
+        photosByDate = groupImagesByDate(imageUrlsWithNames.keys.toList())
+        onDispose { /* Cleanup, if needed */ }
+    }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -179,23 +188,28 @@ fun CalendarPhotoView(paddingValues: PaddingValues) {
 
         // Exibir círculo nas datas que possuem fotos
         selectedDate?.let { date ->
-            val photoUrl = photosByDate[date]
-            if (photoUrl != null) {
+            val formattedDateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+            val photoUrls = photosByDate[formattedDateString]
+            if (photoUrls != null && photoUrls.isNotEmpty()) {
                 // Exibe o círculo indicando a presença de uma foto
                 Box(
                     modifier = Modifier
                         .padding(4.dp)
-                        .background(color = Color.Blue, shape = CircleShape)
+                        .background(color = Color.Red, shape = CircleShape)
                         .size(16.dp)
                 )
 
                 // Aqui você pode abrir uma nova tela ao clicar no círculo
-                // com a foto em tamanho maior
+                // com as fotos em tamanho maior
             }
         }
     }
 }
-*/
+
+
+
+
+
 
 
 @Composable
