@@ -312,7 +312,7 @@ fun GameItem(game: Game, relationship: String, onClick: () -> Unit) {
                     Icon(
                         imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
                         contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
-                        tint = if (isFavorited) Color.Red else Color.Gray,
+                        tint = if (isFavorited) Color(0xFF8C52FF) else Color.Gray,
                         modifier = Modifier.size(24.dp) // Define o tamanho do ícone
                             .clickable {
                                 if (isFavorited) {
@@ -458,7 +458,7 @@ fun GameItemFav(game: Game, relationship: String, context: Context) {
                 Icon(
                     imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     contentDescription = if (isFavorited) "Remove from favorites" else "Add to favorites",
-                    tint = if (isFavorited) Color.Red else Color.Gray,
+                    tint = if (isFavorited) Color(0xFF8C52FF) else Color.Gray,
                     modifier = Modifier.size(24.dp) // Define o tamanho do ícone
                         .clickable {
                             if (isFavorited) {

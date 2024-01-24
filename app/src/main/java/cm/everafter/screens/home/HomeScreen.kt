@@ -700,14 +700,14 @@ fun RelationshipProgressBar(points: Int, quest: String) {
     var addictedColor = Color(0xFFD9D9D9)
 
     if (likersFill) {
-        likersColor = Color(0xFFD896FF)
+        likersColor = Color(0xFFC9B6EF)
     } else if (loversFill) {
-        likersColor = Color(0xFFD896FF)
-        loversColor = Color(0xFFBE29EC)
+        likersColor = Color(0xFFC9B6EF)
+        loversColor = Color(0xFFC7AFF6)
     } else if (addictedFill) {
-        likersColor = Color(0xFFD896FF)
-        loversColor = Color(0xFFBE29EC)
-        addictedColor = Color(0xFF800080)
+        likersColor = Color(0xFFC9B6EF)
+        loversColor = Color(0xFFD896FF)
+        addictedColor = Color(0xFF9568EE)
     }
 
 
