@@ -172,7 +172,7 @@ fun CameraScreen(cameraViewModel: CameraViewModel = koinViewModel(), userViewMod
                                 country = addresses?.get(0)?.countryName
                             }
 
-                            val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${System.currentTimeMillis()}")
+                            val riversRef = storageRef.child("Memories/${userViewModel.loggedInUser!!.relationship}/${1706043358102}")
 
                             riversRef.putBytes(imageBytes,
                                 StorageMetadata.Builder().setCustomMetadata("Coordinates","${currentUserLocation!!.latitude}, ${currentUserLocation!!.longitude}").setCustomMetadata("Location","$city, $country").build())

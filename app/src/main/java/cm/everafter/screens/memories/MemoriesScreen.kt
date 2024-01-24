@@ -606,11 +606,11 @@ suspend fun getFotosLocationsAndBitmapDescriptor(relationShip:String): Map<Pair<
         val coordinates = coordinatesString!!.split(", ")
         val location = fotoMetadata.getCustomMetadata("Location")
 
-        val byteArray = foto.getBytes(1024*1024).await()
+        val byteArray = foto.getBytes(4096*4096).await()
         val imageBitMap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 
-        val width = (imageBitMap.width * 0.15).toInt()
-        val height = (imageBitMap.height * 0.15).toInt()
+        val width = 150
+        val height = 150
 
         val resizedBitmap = Bitmap.createScaledBitmap(imageBitMap, width, height, false)
 
