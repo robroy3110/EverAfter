@@ -1,11 +1,17 @@
 package cm.everafter.screens.memories
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.os.Bundle
 import android.util.Log
 import android.widget.CalendarView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +20,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
@@ -35,10 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import cm.everafter.classes.Perfil
 import cm.everafter.classes.RelationShip
@@ -46,12 +56,16 @@ import cm.everafter.classes.User
 import cm.everafter.screens.home.db
 import cm.everafter.screens.home.getUserDataFromFirebaseWithImage
 import cm.everafter.screens.home.storageRef
+import cm.everafter.viewModels.LocationViewModel
 import cm.everafter.viewModels.UserViewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -59,6 +73,10 @@ import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -74,24 +92,29 @@ sealed class MemoriesView {
 fun MemoriesScreen(
     navController: NavController,
     viewModel: UserViewModel,
+    locationViewModel: LocationViewModel,
     modifier: Modifier = Modifier
 ) {
     var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.CalendarPhotoView) }
-
+    MapsInitializer.initialize(LocalContext.current)
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
                 title = {
                     Text(text = "Memories")
                 },
                 actions = {
-                    Button(
+                    /*Button(
                         onClick = {
                             selectedView = MemoriesView.CalendarPhotoView
                         }
                     ) {
                         Icon(Icons.Default.DateRange, contentDescription = "Calendar")
-                    }
+                    }*/
                     Button(
                         onClick = {
                             selectedView = MemoriesView.PhotoGridView
@@ -118,7 +141,7 @@ fun MemoriesScreen(
                 PhotoGridView(paddingValues, viewModel.loggedInUser!!.relationship)
             }
             is MemoriesView.MapView -> {
-                MapView(paddingValues,viewModel.loggedInUser!!.relationship)
+                MapView(paddingValues,viewModel.loggedInUser!!.relationship,locationViewModel.currentLocation!!)
             }
         }
     }
@@ -215,6 +238,12 @@ fun CalendarPhotoView(paddingValues: PaddingValues, relationShip: String) {
 @Composable
 fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
     var photosByDate by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+    var photosDetails by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+
+    var selectedImage by remember { mutableStateOf<String>("") }
+    var showSelectedImageDialog by remember { mutableStateOf<Boolean>(false) }
+
+
 
     val storageRef = storageRef.child("Memories/${relationShip}")
 
@@ -225,6 +254,8 @@ fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
         // Organizar fotos pelo timestamp (data)
         val photosGroupedByDate = groupImagesByDate(photosWithNames.keys.toList())
 
+        photosDetails = getImageUrlsWithDetails(storageRef)
+
         // Preencher o mapa final com URLs organizados por data
         photosByDate = photosGroupedByDate.mapValues { entry ->
             val (_, imageNames) = entry
@@ -232,6 +263,68 @@ fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
                 photosWithNames[imageName]
             }
         }
+    }
+
+    if(showSelectedImageDialog){
+
+        Dialog(
+            onDismissRequest = { showSelectedImageDialog = false },
+            content = {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(530.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedImage),
+                            contentDescription = null,
+                            contentScale= ContentScale.FillBounds,
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.extraLarge)  // Adiciona bordas arredondadas
+                                .padding(4.dp)
+                        )
+                        val instant = Instant.ofEpochMilli(photosDetails[selectedImage]!![0].toLong())
+                        val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+                        val formatterDate = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                        val formatterHour = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+                        val formattedDate = localDateTime.format(formatterDate)
+                        val formattedTime = localDateTime.format(formatterHour)
+                        Text(formattedDate,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(8.dp))
+                        Text(formattedTime,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(2.dp))
+                        Text(photosDetails[selectedImage]!![2],
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(6.dp))
+                        Text(photosDetails[selectedImage]!![1],fontWeight = FontWeight.Light,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(bottom = 16.dp))
+
+                    }
+                }
+            }
+        )
     }
 
     LazyColumn(
@@ -279,6 +372,10 @@ fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
                                     .aspectRatio(1f)
                                     .clip(MaterialTheme.shapes.extraLarge)  // Adiciona bordas arredondadas
                                     .padding(4.dp)
+                                    .clickable {
+                                        selectedImage = imageUrl
+                                        showSelectedImageDialog = true
+                                    }
                             )
                         }
                     }
@@ -291,58 +388,161 @@ fun PhotoGridView(paddingValues: PaddingValues, relationShip: String) {
 
 
 @Composable
-fun MapView(paddingValues: PaddingValues, relationShip: String) {
+fun MapView(paddingValues: PaddingValues, relationShip: String,currentLocation: LatLng) {
     var mapView: MapView? = null
-    var fotosLocations by remember { mutableStateOf<List<Pair<LatLng,String>>?>(mutableListOf())}
+    var fotosLocations by remember { mutableStateOf<Map<Pair<LatLng,String>,Pair<String,BitmapDescriptor>>?>(null)}
+    var photosDetails by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+    val storageRef = storageRef.child("Memories/${relationShip}")
+    var cameraLocation by remember {mutableStateOf<LatLng>(currentLocation)}
+
+    var selectedImage by remember { mutableStateOf<String>("") }
+    var showSelectedImageDialog by remember { mutableStateOf<Boolean>(false) }
+
     LaunchedEffect(Unit) {
-        fotosLocations = getFotosLocations(relationShip)
+        fotosLocations = getFotosLocationsAndBitmapDescriptor(relationShip)
+        photosDetails = getImageUrlsWithDetails(storageRef)
 
     }
-    fotosLocations?.let {
-        if(fotosLocations!!.isNotEmpty()) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { context ->
-                    mapView = MapView(context)
-                    mapView!!
-                },
-                update = { mapView ->
-                    // Configurações adicionais podem ser feitas aqui
-                    mapView?.onCreate(Bundle())
-                    mapView?.getMapAsync { googleMap ->
-                        // Configurações adicionais do mapa
-                        onMapReady(googleMap, fotosLocations!!)
+    if(showSelectedImageDialog){
+        Dialog(
+            onDismissRequest = { showSelectedImageDialog = false },
+            content = {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(530.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedImage),
+                            contentDescription = null,
+                            contentScale= ContentScale.FillBounds,
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(MaterialTheme.shapes.extraLarge)  // Adiciona bordas arredondadas
+                                .padding(4.dp)
+                        )
+                        val instant = Instant.ofEpochMilli(photosDetails[selectedImage]!![0].toLong())
+                        val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+                        val formatterDate = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                        val formatterHour = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+                        val formattedDate = localDateTime.format(formatterDate)
+                        val formattedTime = localDateTime.format(formatterHour)
+                        Text(formattedDate,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(8.dp))
+                        Text(formattedTime,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(2.dp))
+                        Text(photosDetails[selectedImage]!![2],
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(6.dp))
+                        Text(photosDetails[selectedImage]!![1],fontWeight = FontWeight.Light,
+                            fontSize = 20.sp,  // Ajuste o tamanho da fonte conforme desejado
+                            color = Color.Black,
+                            modifier = Modifier.padding(bottom = 16.dp))
+
                     }
                 }
-            )
+            }
+        )
+    }
+    fotosLocations?.let {
+        if (fotosLocations != null) {
+            if (fotosLocations!!.isNotEmpty()) {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { context ->
+                        mapView = MapView(context)
+                        mapView!!
+                    },
+                    update = { mapView ->
+                        // Configurações adicionais podem ser feitas aqui
+                        mapView?.onCreate(Bundle())
+                        mapView?.getMapAsync { googleMap ->
+                            // Configurações adicionais do mapa
+
+                            for (foto in fotosLocations!!) {
+                                googleMap.addMarker(
+                                    MarkerOptions()
+                                        .position(foto.key.first)
+                                        .title(foto.key.second)         //Isto esta ganda confusao dont blame me but ask me wtf going on here if u dont know
+                                        .icon(foto.value.second)
+                                        .snippet(foto.value.first)
+                                )
+
+                            }
+
+                            googleMap.setOnInfoWindowClickListener {
+                                selectedImage = it.snippet!!
+                                cameraLocation = it.position
+                                showSelectedImageDialog = true
+                            }
+
+                            // Adicione um marcador em Lisboa
+
+
+                            // Configuração da posição e zoom
+                            val cameraPosition = CameraPosition.Builder()
+                                .target(cameraLocation) // Define o centro do mapa na posição de Lisboa
+                                .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
+                                .build()
+
+                            // Mova a câmera para a posição e zoom desejados
+                            googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+                        }
+                    }
+                )
+            } else {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { context ->
+                        mapView = MapView(context)
+                        mapView!!
+                    },
+                    update = { mapView ->
+                        // Configurações adicionais podem ser feitas aqui
+                        mapView?.onCreate(Bundle())
+                        mapView?.getMapAsync { googleMap ->
+                            // Configurações adicionais do mapa
+                            onMapReadyNoPhotos(googleMap)
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
-fun onMapReady(googleMap: GoogleMap, fotosLocations: List<Pair<LatLng,String>>) {
+
+fun onMapReadyNoPhotos(googleMap: GoogleMap) {
     // Configurações adicionais do mapa após a inicialização
 
-    // Posição de Lisboa, Portugal
-        for (location in fotosLocations) {
-            googleMap.addMarker(
-                MarkerOptions()
-                    .position(location.first)
-                    .title(location.second)
-            )
 
-        }
+    // Configuração da posição e zoom
+    val cameraPosition = CameraPosition.Builder()
+        .target(LatLng(38.697055, -9.4222933)) // Define o centro do mapa na posição de Lisboa
+        .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
+        .build()
 
-        // Adicione um marcador em Lisboa
-
-
-        // Configuração da posição e zoom
-        val cameraPosition = CameraPosition.Builder()
-            .target(fotosLocations[0].first) // Define o centro do mapa na posição de Lisboa
-            .zoom(15f) // Define o nível de zoom desejado (ajuste conforme necessário)
-            .build()
-
-        // Mova a câmera para a posição e zoom desejados
-        googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+    // Mova a câmera para a posição e zoom desejados
+    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 }
 
 fun getMonthByNumber(month: Int) : String{
@@ -386,8 +586,8 @@ fun getMonthByNumber(month: Int) : String{
     }
 }
 
-suspend fun getFotosLocations(relationShip:String): List<Pair<LatLng,String>> {
-    val fotosLocations = mutableListOf<Pair<LatLng,String>>()
+suspend fun getFotosLocationsAndBitmapDescriptor(relationShip:String): Map<Pair<LatLng,String>, Pair<String,BitmapDescriptor>> {
+    val fotosLocations = mutableMapOf<Pair<LatLng,String>,Pair<String,BitmapDescriptor>>()
 
     val ref = storageRef.child("Memories/${relationShip}")
 
@@ -397,19 +597,51 @@ suspend fun getFotosLocations(relationShip:String): List<Pair<LatLng,String>> {
     for(foto in fotosRef.items){
 
         val fotoMetadata = foto.metadata.await()
+        var download = foto.downloadUrl.await().toString()
 
         val coordinatesString = fotoMetadata.getCustomMetadata("Coordinates")
         val coordinates = coordinatesString!!.split(", ")
         val location = fotoMetadata.getCustomMetadata("Location")
-        if(location != null){
-            Log.i("TSES","${Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),location)}")
-            fotosLocations.add(Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),location))
-        }else{
-            fotosLocations.add(Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),"Location Not Found"))
+
+        val byteArray = foto.getBytes(1024*1024).await()
+        val imageBitMap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+
+        val width = (imageBitMap.width * 0.15).toInt()
+        val height = (imageBitMap.height * 0.15).toInt()
+
+        val resizedBitmap = Bitmap.createScaledBitmap(imageBitMap, width, height, false)
+
+        val circularBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(circularBitmap)
+
+        // Desenha um círculo branco como fundo
+        val paintCircle = Paint().apply {
+            color = Color.White.hashCode()
+            style = Paint.Style.FILL
         }
+        canvas.drawCircle(width.toFloat() / 2, height.toFloat() / 2, width.toFloat() / 2, paintCircle)
+
+        // Desenha o bitmap redimensionado no centro do círculo
+        val paintBitmap = Paint().apply {
+            isAntiAlias = true
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+        }
+        canvas.drawBitmap(resizedBitmap, 0f, 0f, paintBitmap)
+
+        // Adiciona uma borda branca ao redor do círculo
+        val paintBorder = Paint().apply {
+            color = Color.White.hashCode()
+            style = Paint.Style.STROKE
+            strokeWidth = 5f // Ajuste a largura da borda conforme necessário
+        }
+        canvas.drawCircle(width.toFloat() / 2, height.toFloat() / 2, width.toFloat() / 2, paintBorder)
+
+        val imageBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(circularBitmap)
+
+        fotosLocations[Pair(LatLng(coordinates[0].toDouble(),coordinates[1].toDouble()),location!!)] = Pair(download,imageBitmapDescriptor)
+
 
     }
-
 
     return fotosLocations
 }
@@ -436,7 +668,32 @@ suspend fun getImageUrlsWithNames(storageRef: StorageReference): Map<String, Str
     }
 }
 
+suspend fun getImageUrlsWithDetails(storageRef: StorageReference): Map<String, List<String>> {
+    try {
+        val result = storageRef.listAll().await()
+        val photosMap : MutableMap<String,List<String>> = mutableMapOf()
+        for(foto in result.items){
 
+            val photoDetails = mutableListOf<String>()
+            val fotoMetadata = foto.metadata.await()
+
+            val coordinates = fotoMetadata.getCustomMetadata("Coordinates")
+            val location = fotoMetadata.getCustomMetadata("Location")
+            val downloadUrl = foto.downloadUrl.await().toString()
+
+            photoDetails.add(foto.name)
+            photoDetails.add(coordinates!!)
+            photoDetails.add(location!!)
+
+            photosMap[downloadUrl] = photoDetails
+
+        }
+        return photosMap
+
+    } catch (e: Exception) {
+        return emptyMap()
+    }
+}
 fun groupImagesByDate(imageNames: List<String>): Map<String, List<String>> {
     return imageNames.groupBy { calculateDateFromImageName(it) }
 }
