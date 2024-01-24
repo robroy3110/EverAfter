@@ -374,7 +374,7 @@ fun HomeScreenRelation(
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Profile",
-                            tint = Color.Black, // Black icon color
+                            tint = Color.White, // Black icon color
                             modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                         )
                     }
@@ -391,7 +391,7 @@ fun HomeScreenRelation(
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notifications",
-                            tint = Color.Black, // Black icon color
+                            tint = Color.White, // Black icon color
                             modifier = Modifier.size(32.dp) // Adjusted size for a bit bigger icon
                         )
                     }
