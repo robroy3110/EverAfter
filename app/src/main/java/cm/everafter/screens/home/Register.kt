@@ -50,7 +50,7 @@ fun Register(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Substitua pelo ID da sua imagem
+            painter = painterResource(id = R.drawable.logo_everafter), // Substitua pelo ID da sua imagem
             contentDescription = null,
             modifier = Modifier
                 .size(120.dp)
