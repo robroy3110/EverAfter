@@ -145,12 +145,12 @@ fun PlaylistDetailsScreen(
         if (otheruser[0] == '1') {
             DisposableEffect(relationShip?.lastsongplayed1) {
                 val relationRef = db.reference.child("Relationships")
-                    .child(userViewModel.loggedInUser!!.relationship)
+                    .child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed1")
                 val listener = object : ValueEventListener {
 
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                        relationShip = updatedRelation
+                        val updatedRelation = snapshot.getValue(String::class.java)
+                        relationShip!!.lastsongplayed1 = updatedRelation!!
 
                         if(relationShip!!.lastsongplayed1 != "") {
                             notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed1)
@@ -166,18 +166,20 @@ fun PlaylistDetailsScreen(
                 // Remove the listener when the composable is disposed
                 onDispose {
                     relationRef.removeEventListener(listener)
+                    db.reference.child("Relationships")
+                        .child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed2").setValue("")
                 }
 
             }
         } else {
             DisposableEffect(relationShip?.lastsongplayed2) {
                 val relationRef = db.reference.child("Relationships")
-                    .child(userViewModel.loggedInUser!!.relationship)
+                    .child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed2")
                 val listener = object : ValueEventListener {
 
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val updatedRelation = snapshot.getValue(RelationShip::class.java)
-                        relationShip = updatedRelation
+                        val updatedRelation = snapshot.getValue(String::class.java)
+                        relationShip!!.lastsongplayed2 = updatedRelation!!
 
                         if(relationShip!!.lastsongplayed2 != "") {
                             notificationService.showNewSongPlayedNotification(relationShip!!.lastsongplayed2)
@@ -192,6 +194,8 @@ fun PlaylistDetailsScreen(
                 // Remove the listener when the composable is disposed
                 onDispose {
                     relationRef.removeEventListener(listener)
+                    db.reference.child("Relationships")
+                        .child(userViewModel.loggedInUser!!.relationship).child("lastsongplayed1").setValue("")
                 }
 
             }

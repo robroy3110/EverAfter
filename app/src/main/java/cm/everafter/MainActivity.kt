@@ -7,11 +7,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -98,6 +102,23 @@ class MainActivity : ComponentActivity(), ImageLoaderFactory {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
+
+        setContent{
+            EverAfterTheme {
+                // If userImageBitMap is null, show loading indicator
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Replace this with an Image that loads your loading XML
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_everafter),
+                        contentDescription = null
+                    )
+                }
+            }
+        }
+
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,CancellationTokenSource().token)
             .addOnSuccessListener { location: Location? ->
                 currentLocation = if (location != null) {

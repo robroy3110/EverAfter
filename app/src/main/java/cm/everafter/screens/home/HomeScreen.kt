@@ -275,6 +275,18 @@ fun ResultScreen(modifier: Modifier, navController: NavController, viewModel: Us
                         )
                     }
                 }
+            }?: run {
+                // If userImageBitMap is null, show loading indicator
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Replace this with an Image that loads your loading XML
+                    Image(
+                        painter = painterResource(id = R.drawable.loading_img),
+                        contentDescription = null
+                    )
+                }
             }
 
 
@@ -292,6 +304,18 @@ fun ResultScreen(modifier: Modifier, navController: NavController, viewModel: Us
                             userBitMap = userImageBitMap!!,
                             notificationsUsers = notificationsUsers!!.toList()
                         )
+                    } ?: run {
+                        // If userImageBitMap is null, show loading indicator
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Replace this with an Image that loads your loading XML
+                            Image(
+                                painter = painterResource(id = R.drawable.loading_img),
+                                contentDescription = null
+                            )
+                        }
                     }
 
                 } ?: run {
@@ -983,31 +1007,31 @@ fun HomeScreenNoRelation(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(375.dp)
+                            .height(235.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
 
                             Text(
-                                text = "This is a dialog with buttons and an image.",
-                                modifier = Modifier.padding(16.dp),
+                                text = "Search user by their username!",
+                                modifier = Modifier.padding(start= 16.dp,end = 16.dp,top = 16.dp),
                             )
                             OutlinedTextField(
                                 label = { Text("Username") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                                 value = username.value,
                                 singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp,end = 16.dp,top = 16.dp),
                                 onValueChange = { username.value = it }
                             )
                             Button(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp,end = 16.dp,top = 10.dp),
                                 onClick = {
                                     db.reference.child("Usernames")
                                         .child(username.value.text.trim()).get()
@@ -1131,27 +1155,27 @@ fun HomeScreenNoRelation(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(375.dp)
+                            .height(200.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
 
                             Text(
                                 text = "Error user not found",
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(start = 16.dp,end = 16.dp,top = 16.dp),
                             )
                             Text(
                                 text = "Try again?",
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(start = 16.dp,end = 16.dp,top = 16.dp),
                             )
                             Button(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp,end = 16.dp,top = 16.dp),
                                 onClick = {
                                     showDialogError = showDialogError.not()
                                     showDialog = showDialog.not()
@@ -1174,27 +1198,27 @@ fun HomeScreenNoRelation(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(375.dp)
+                            .height(200.dp)
                             .padding(16.dp),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
 
                             Text(
                                 text = "Error already in a relationship",
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(start = 16.dp,end = 16.dp,top = 16.dp),
                             )
                             Text(
                                 text = "Try again?",
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(start = 16.dp,end = 16.dp,top = 16.dp),
                             )
                             Button(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp,end = 16.dp,top = 16.dp),
                                 onClick = {
                                     showDialogUserInRelationship =
                                         showDialogUserInRelationship.not()
