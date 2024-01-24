@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 
 import androidx.compose.runtime.Composable
@@ -120,14 +122,14 @@ fun ProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.Filled.ArrowBackIos, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = {
                         auth.signOut()
                         navController.navigate(Screens.HomeScreen.route) }) {
-                        Icon(imageVector = Icons.Default.Home, contentDescription = "Home")
+                        Icon(imageVector = Icons.Filled.Logout, contentDescription = "Home")
                     }
                 }
             )
