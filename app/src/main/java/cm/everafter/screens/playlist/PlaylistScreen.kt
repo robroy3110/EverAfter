@@ -2,6 +2,7 @@
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -251,6 +253,8 @@ fun PlayListScreen(
                         playlistsRef.removeEventListener(playlistsListener)
                     }
                 }
+
+                var context = LocalContext.current
                 // Display playlists
                 LazyColumn {
                     items(playlists) { playlist ->
@@ -264,6 +268,7 @@ fun PlayListScreen(
                             onPlayButtonClick = { playlist ->
                                 // Implement play functionality here
                                 playlistViewModel.playPlaylist(playlist)
+                                Toast.makeText(context, "You are currently listening to " + playlist.name + " playlist!", Toast.LENGTH_SHORT).show()
                             },
                             onStopButtonClick = {
                                 // Implement stop functionality here

@@ -350,6 +350,8 @@ fun PlaylistDetailsScreen(
             }
         }
 
+        var context = LocalContext.current
+
         LazyColumn {
             playlistDetails?.songs?.let { songs ->
                 itemsIndexed(songs) { index, song ->
@@ -389,6 +391,7 @@ fun PlaylistDetailsScreen(
 
                             // Start playing the song
                             playlistViewModel.playSong(song)
+                            Toast.makeText(context, "You are currently listening to " + song.name + "!", Toast.LENGTH_SHORT).show()
                             currentlyPlayingSong = song
                         },
                         onStopClick = {

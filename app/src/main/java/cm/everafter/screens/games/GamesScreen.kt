@@ -256,6 +256,8 @@ fun GameItem(game: Game, relationship: String, onClick: () -> Unit) {
             isFavorited = game.exists()
         }
 
+        var context = LocalContext.current
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -316,8 +318,10 @@ fun GameItem(game: Game, relationship: String, onClick: () -> Unit) {
                         modifier = Modifier.size(24.dp) // Define o tamanho do ícone
                             .clickable {
                                 if (isFavorited) {
+                                    Toast.makeText(context, game.title + " was removed from your downloaded games list!", Toast.LENGTH_SHORT).show()
                                     removeFromFavGames(relationship, game.title)
                                 } else {
+                                    Toast.makeText(context, game.title + " was added to your downloaded games list!", Toast.LENGTH_SHORT).show()
                                     addToFavGames(relationship, game.title)
                                 }
                                 // Alterne o estado de favoritos
@@ -462,8 +466,10 @@ fun GameItemFav(game: Game, relationship: String, context: Context) {
                     modifier = Modifier.size(24.dp) // Define o tamanho do ícone
                         .clickable {
                             if (isFavorited) {
+                                Toast.makeText(context, game.title + " was removed from your downloaded games list!", Toast.LENGTH_SHORT).show()
                                 removeFromFavGames(relationship, game.title)
                             } else {
+                                Toast.makeText(context, game.title + " was added to your downloaded games list!", Toast.LENGTH_SHORT).show()
                                 addToFavGames(relationship, game.title)
                             }
                             // Alterne o estado de favoritos
