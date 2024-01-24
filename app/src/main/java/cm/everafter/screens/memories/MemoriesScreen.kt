@@ -95,7 +95,7 @@ fun MemoriesScreen(
     locationViewModel: LocationViewModel,
     modifier: Modifier = Modifier
 ) {
-    var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.CalendarPhotoView) }
+    var selectedView by remember { mutableStateOf<MemoriesView>(MemoriesView.PhotoGridView) }
     MapsInitializer.initialize(LocalContext.current)
     Scaffold(
         topBar = {
@@ -135,15 +135,17 @@ fun MemoriesScreen(
         }
     ) { paddingValues ->
         when (selectedView) {
-            is MemoriesView.CalendarPhotoView -> {
+            /*is MemoriesView.CalendarPhotoView -> {
                 CalendarPhotoView(paddingValues, viewModel.loggedInUser!!.relationship)
-            }
+            }*/
             is MemoriesView.PhotoGridView -> {
                 PhotoGridView(paddingValues, viewModel.loggedInUser!!.relationship)
             }
             is MemoriesView.MapView -> {
                 MapView(paddingValues,viewModel.loggedInUser!!.relationship,locationViewModel.currentLocation!!)
             }
+
+            else -> {}
         }
     }
 }
