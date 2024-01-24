@@ -100,6 +100,7 @@ fun MemoriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.height(90.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,

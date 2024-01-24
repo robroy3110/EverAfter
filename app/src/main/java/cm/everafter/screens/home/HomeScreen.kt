@@ -355,6 +355,7 @@ fun HomeScreenRelation(
             // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
             // Se precisar de informações específicas, você pode personalizar a TopAppBar conforme necessário
             TopAppBar(
+                modifier = Modifier.height(90.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
@@ -366,7 +367,6 @@ fun HomeScreenRelation(
                             navController.navigate(Screens.ProfileScreen.route)
                         },
                         modifier = Modifier
-                            .wrapContentSize()
                             .padding(start = 8.dp)
                             .background(Color.Transparent)
 
@@ -384,7 +384,6 @@ fun HomeScreenRelation(
                             showDialogNotifications = true
                         },
                         modifier = Modifier
-                            .wrapContentSize()
                             .padding(start = 8.dp)
                             .background(Color.Transparent)
 
