@@ -41,7 +41,7 @@ fun AppNavigation(
             HomeScreen(navController = navController, viewModel = userViewModel)
         }
         composable(route = Screens.MemoriesScreen.route){
-            MemoriesScreen(navController = navController, viewModel= userViewModel)
+            MemoriesScreen(navController = navController, viewModel= userViewModel,locationViewModel = locationViewModel)
         }
         composable(route = Screens.CameraScreen.route){
             FotoScreen(userViewModel,locationViewModel)
