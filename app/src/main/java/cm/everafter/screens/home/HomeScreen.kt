@@ -79,6 +79,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -354,6 +355,10 @@ fun HomeScreenRelation(
             // Aqui você pode adicionar uma TopAppBar ou outras coisas no topo do seu layout
             // Se precisar de informações específicas, você pode personalizar a TopAppBar conforme necessário
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
                 title = { Text("This is us") },
                 actions = {
                     Button(
