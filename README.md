@@ -33,9 +33,9 @@ This page presents a list of co-op games. Users receive daily notifications abou
 
 Couples can create shared playlists using songs available in the app. Listening to the same music at the same time allows them to earn points, turning music into a shared bonding activity.
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d9f3d556-c8b6-48c2-95bc-24c6e3f9dbab" width="250"/>
+  <img src="https://github.com/user-attachments/assets/053e14a4-9fec-47ae-8163-96105d264ced" width="250"/>
   <img src="https://github.com/user-attachments/assets/d44d82a1-dca9-40b9-bcd6-e33ea8a0f309" width="250"/>
-  <img src="https://github.com/user-attachments/assets/07e75368-b95b-490e-a9e9-62fa964596bc" width="250"/>
+  <img src="https://github.com/user-attachments/assets/5b1180d0-e0ed-4bf4-8dbe-91cbd988ed35" width="250"/>
 </p>
 
 ## Built With
