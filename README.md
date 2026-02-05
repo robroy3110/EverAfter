@@ -6,7 +6,6 @@
 
 This section allows couples to define goals they want to achieve together by the end of the year in different areas such as experiences, gaming, and music. Completing goals rewards points, reinforcing motivation through gamification.
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/72a3da95-03f2-4fbe-94db-6391f8e2e83f" width="250"/>
   <img src="https://github.com/user-attachments/assets/ba7b83e1-ac64-41d1-8972-5929d9cb1d36" width="250"/>
   <img src="https://github.com/user-attachments/assets/732ec698-be78-401e-aa9b-1a02af1c59f9" width="250"/>
 </p>
