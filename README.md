@@ -2,6 +2,10 @@
 
 **EverAfter** is a gamified mobile application designed to help couples grow together, stay motivated, and preserve meaningful shared memories. The app focuses especially on couples in long-distance relationships who enjoy music and gaming. Through a points system, shared goals, and interactive features, the app transforms relationship activities into a collaborative journey. This project was developed as part of the **Mobile Computing 23/24 course** at FCUL.
 
+## App presentation
+
+Youtube Link: https://www.youtube.com/watch?v=lnP8vmfwkBY
+
 ## Goals
 
 This section allows couples to define goals they want to achieve together by the end of the year in different areas such as experiences, gaming, and music. Completing goals rewards points, reinforcing motivation through gamification.
