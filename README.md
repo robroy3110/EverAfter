@@ -1,6 +1,6 @@
-# EverAfter
+# **EverAfter**
 
-EverAfter is a gamified mobile application designed to help couples grow together, stay motivated, and preserve meaningful shared memories. The app focuses especially on couples in long-distance relationships who enjoy music and gaming. Through a points system, shared goals, and interactive features, the app transforms relationship activities into a collaborative journey. This project was developed as part of the Mobile Computing 23/24 course at FCUL.
+**EverAfter** is a gamified mobile application designed to help couples grow together, stay motivated, and preserve meaningful shared memories. The app focuses especially on couples in long-distance relationships who enjoy music and gaming. Through a points system, shared goals, and interactive features, the app transforms relationship activities into a collaborative journey. This project was developed as part of the **Mobile Computing 23/24 course** at FCUL.
 
 ## Goals
 
@@ -20,14 +20,14 @@ Couples can create shared playlists using songs available in the app. Listening 
 
 ## Built With
 
-Android (Mobile)
-Kotlin
-Notifications System
-Location Services
-Camera Integration
+- Android (Mobile)
+- Kotlin
+- Notifications System
+- Location Services
+- Camera Integration
 
 ## Authors
 
-Inês Marques
-Beatriz Rosa
-Robert Cachapa
+- Inês Marques
+- Beatriz Rosa
+- Robert Cachapa
