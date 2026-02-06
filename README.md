@@ -45,9 +45,6 @@ Couples can create shared playlists using songs available in the app. Listening 
 
 - Android (Mobile)
 - Kotlin
-- Notifications System
-- Location Services
-- Camera Integration
 
 ## Authors
 
